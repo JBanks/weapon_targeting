@@ -17,14 +17,20 @@ DISPLACEMENT_NORMALIZATION = max(MAX_SPEED, MAX_RANGE)
 
 
 def loadProblem(filename):
+	problem = {}
 	with open(filename, 'r') as file:
-		problem = json.load(file)
+		fromFile = json.load(file)
+	for key in fromFile.keys():
+		problem[key] = np.asarray(fromFile[key])
 	return problem
 
 
 def saveProblem(problem, filename):
+	toFile = {}
+	for key in problem.keys():
+		toFile[key] = problem[key].tolist()
 	with open(filename, 'w') as file:
-		json.dump(problem, file)
+		json.dump(toFile, file)
 
 
 def boundsChecked(array):
@@ -38,10 +44,10 @@ def boundsChecked(array):
 
 def newPlane(Arena):
 	"""
-	Aircraft is limited in munitions (a tank carries almost infinite ammunition).  Aircraft is designed to strike a target and leave.  
+	Aircraft is limited in munitions (a tank carries almost infinite ammunition).  Aircraft is designed to strike a target and leave.
 	It will loiter about 10 minutes away until a target is called, engage, and then return to re-arm.
 	Aircraft engage with a high degree of lethality (size of munitions is large compared to target) and they generally operate in pairs.
-	May be able to engage every couple of hours. 
+	May be able to engage every couple of hours.
 	"""
 	ActiveTime = 2
 	TimeFactor = min(ActiveTime, Arena[JF.ArenaFeatures.TIMEHORIZON])
@@ -57,13 +63,13 @@ def newPlane(Arena):
 	plane[JF.EffectorFeatures.TIMELEFT] = min(1, ActiveTime / Arena[JF.ArenaFeatures.TIMEHORIZON])
 	plane[JF.EffectorFeatures.EFFECTIVEDISTANCE] = 2 / (Arena[JF.ArenaFeatures.SCALE] * DISPLACEMENT_NORMALIZATION)
 	plane[JF.EffectorFeatures.AMMORATE] = 1 / 2
-	plane[JF.EffectorFeatures.ENERGYRATE] = 1 # Arena[JF.ArenaFeatures.SCALE] / DISPLACEMENT_NORMALIZATION 
+	plane[JF.EffectorFeatures.ENERGYRATE] = 1 # Arena[JF.ArenaFeatures.SCALE] / DISPLACEMENT_NORMALIZATION
 	return boundsChecked(plane)
 
 
 def newHelicopter(Arena):
 	"""
-	Extremely lethal with a much quicker cycle time compared to fixed-wing.  
+	Extremely lethal with a much quicker cycle time compared to fixed-wing.
 	It can engage 2x as many targets, but it is more susceptible to counter-fire (If I can see them, they can see me)
 	"""
 	pass
@@ -99,7 +105,7 @@ def newBoat(Arena):
 
 def NewArtillery(Arena):
 	"""
-	This will be a "missile battery", which has 9 launchers and can fire 12 missiles.  Could hit multiple targets at once.  
+	This will be a "missile battery", which has 9 launchers and can fire 12 missiles.  Could hit multiple targets at once.
 	Doug says "the type of target matters a great deal", TODO: look more into this to ensure we properly match PSuccess
 	Range will be 60-80km, and will be placed 30-50km from the front-line.
 
@@ -141,7 +147,7 @@ def NewArmoured(Arena):
 	armoured[JF.EffectorFeatures.TIMELEFT] = 1
 	armoured[JF.EffectorFeatures.EFFECTIVEDISTANCE] = 0.5 / (Arena[JF.ArenaFeatures.SCALE] * DISPLACEMENT_NORMALIZATION)
 	armoured[JF.EffectorFeatures.AMMORATE] = 1 / 13
-	armoured[JF.EffectorFeatures.ENERGYRATE] = 1 # Arena[JF.ArenaFeatures.SCALE] / DISPLACEMENT_NORMALIZATION 
+	armoured[JF.EffectorFeatures.ENERGYRATE] = 1 # Arena[JF.ArenaFeatures.SCALE] / DISPLACEMENT_NORMALIZATION
 	return boundsChecked(armoured)
 
 
@@ -163,7 +169,7 @@ def newInfantry(Arena):
 	infantry[JF.EffectorFeatures.TIMELEFT] = 1
 	infantry[JF.EffectorFeatures.EFFECTIVEDISTANCE] = 0.75 / (Arena[JF.ArenaFeatures.SCALE] * DISPLACEMENT_NORMALIZATION)
 	infantry[JF.EffectorFeatures.AMMORATE] = 1 / 2
-	infantry[JF.EffectorFeatures.ENERGYRATE] = 1 # Arena[JF.ArenaFeatures.SCALE] / DISPLACEMENT_NORMALIZATION 
+	infantry[JF.EffectorFeatures.ENERGYRATE] = 1 # Arena[JF.ArenaFeatures.SCALE] / DISPLACEMENT_NORMALIZATION
 	return boundsChecked(infantry)
 
 
@@ -250,7 +256,7 @@ class ProblemGenerator():
 					if travelDistance <= 0:
 						self.opportunities[i][j][JF.OpportunityFeatures.TIMECOST] = 0
 						self.opportunities[i][j][JF.OpportunityFeatures.ENERGYCOST] = 0
-					elif (RTDistance > self.effectors[i][JF.EffectorFeatures.ENERGYLEFT] / (self.effectors[i][JF.EffectorFeatures.ENERGYRATE]) or 
+					elif (RTDistance > self.effectors[i][JF.EffectorFeatures.ENERGYLEFT] / (self.effectors[i][JF.EffectorFeatures.ENERGYRATE]) or
 						self.effectors[i][JF.EffectorFeatures.TIMELEFT] < RTDistance / (self.effectors[i][JF.EffectorFeatures.SPEED])):
 						self.opportunities[i][j][JF.OpportunityFeatures.SELECTABLE] = False
 						print(f"{RTDistance > self.effectors[i][JF.EffectorFeatures.ENERGYLEFT] / self.effectors[i][JF.EffectorFeatures.ENERGYRATE]} : {RTDistance} > {self.effectors[i][JF.EffectorFeatures.ENERGYLEFT]} / {self.effectors[i][JF.EffectorFeatures.ENERGYRATE]}")
