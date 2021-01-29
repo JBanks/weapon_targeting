@@ -3,7 +3,6 @@ import json
 import random
 import math
 import JFAFeatures as JF
-import heapq
 
 MAX_SPEED = 6000
 
@@ -332,28 +331,6 @@ def CombatArms():
 	heapq.heappush(rands, random.randint(0,total))
 	artillery = heapq.heappop(rands)
 	armoured = heapq.heappop(rands) - artillery
-	infantry = total - (artillery + armoured)
-
-	targets = random.randint(10, 30)
-
-	PG = ProblemGenerator()
-	return PG.newProblem(arena, targets, artillery=artillery, armoured=armoured, infantry=infantry)
-
-
-def NoPlanes():
-	arena = np.zeros(len(JF.ArenaFeatures))
-	arena[JF.ArenaFeatures.SCALE] = 30
-	arena[JF.ArenaFeatures.COASTLINE] = 0.01
-	arena[JF.ArenaFeatures.FRONTLINE] = 0.4
-	arena[JF.ArenaFeatures.TIMEHORIZON] = 4
-	rands = []
-	total = random.randint(9,13)
-	rands.append(random.randint(0,total))
-	rands.append(random.randint(0,total))
-	rands.sort()
-
-	artillery = rands[0]
-	armoured = rands[1] - artillery
 	infantry = total - (artillery + armoured)
 
 	targets = random.randint(10, 30)
