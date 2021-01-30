@@ -11,9 +11,6 @@ DISPLACEMENT_NORMALIZATION = max(MAX_SPEED, MAX_RANGE)
 STANDARDIZED_SCALE = 500
 STANDARDIZED_TIME = 12
 
-#ENERGYRATE_NORMALIZATION = MIN_RANGE / Arena[JF.ArenaFeatures.SCALE]
-
-
 def loadProblem(filename):
 	problem = {}
 	with open(filename, 'r') as file:
@@ -22,7 +19,6 @@ def loadProblem(filename):
 		problem[key] = np.asarray(fromFile[key])
 	return problem
 
-
 def saveProblem(problem, filename):
 	toFile = {}
 	for key in problem.keys():
@@ -30,15 +26,24 @@ def saveProblem(problem, filename):
 	with open(filename, 'w') as file:
 		json.dump(toFile, file)
 
-
-def boundsChecked(array):
-	"""
-	TODO: This function brings the time into scope, but negatively affects planes' distance.
-	"""
-	#for i in range(0,array.shape[0]):
-		#array[i] = array[i] if array[i] < 1 else 1
-	return array
-
+def newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo):
+	x_low, x_high = x_range
+	y_low, y_high = y_range
+	TimeFactor = min(time, Arena[JF.ArenaFeatures.TIMEHORIZON])
+	effector = np.zeros(len(JF.EffectorFeatures))
+	effector[JF.EffectorFeatures.XPOS] = random.uniform(x_low, x_high) / STANDARDIZED_SCALE
+	effector[JF.EffectorFeatures.YPOS] = random.uniform(y_low, y_high) / STANDARDIZED_SCALE
+	effector[JF.EffectorFeatures.STARTX] = effector[JF.EffectorFeatures.XPOS]
+	effector[JF.EffectorFeatures.STARTY] = effector[JF.EffectorFeatures.YPOS]
+	effector[JF.EffectorFeatures.STATIC] = static
+	effector[JF.EffectorFeatures.SPEED] = speed / (STANDARDIZED_SCALE * MAX_SPEED)
+	effector[JF.EffectorFeatures.AMMOLEFT] = 1
+	effector[JF.EffectorFeatures.ENERGYLEFT] = range / (STANDARDIZED_SCALE * MAX_RANGE)
+	effector[JF.EffectorFeatures.TIMELEFT] = TimeFactor / STANDARDIZED_TIME
+	effector[JF.EffectorFeatures.EFFECTIVEDISTANCE] = effective_distance / STANDARDIZED_SCALE
+	effector[JF.EffectorFeatures.AMMORATE] = 1 / ammo
+	effector[JF.EffectorFeatures.ENERGYRATE] = 1 / MAX_RANGE
+	return effector
 
 def newPlane(Arena):
 	"""
@@ -47,23 +52,15 @@ def newPlane(Arena):
 	Aircraft engage with a high degree of lethality (size of munitions is large compared to target) and they generally operate in pairs.
 	May be able to engage every couple of hours.
 	"""
-	ActiveTime = 2
-	TimeFactor = min(ActiveTime, Arena[JF.ArenaFeatures.TIMEHORIZON])
-	plane = np.zeros(len(JF.EffectorFeatures))
-	plane[JF.EffectorFeatures.XPOS] = 0
-	plane[JF.EffectorFeatures.YPOS] = random.uniform(0, Arena[JF.ArenaFeatures.FRONTAGE]) / STANDARDIZED_SCALE
-	plane[JF.EffectorFeatures.STARTX] = plane[JF.EffectorFeatures.XPOS]
-	plane[JF.EffectorFeatures.STARTY] = plane[JF.EffectorFeatures.YPOS]
-	plane[JF.EffectorFeatures.STATIC] = False
-	plane[JF.EffectorFeatures.SPEED] = 1000 / (STANDARDIZED_SCALE * MAX_SPEED)
-	plane[JF.EffectorFeatures.AMMOLEFT] = 1
-	plane[JF.EffectorFeatures.ENERGYLEFT] = 1000 / (STANDARDIZED_SCALE * MAX_RANGE)
-	plane[JF.EffectorFeatures.TIMELEFT] = TimeFactor / STANDARDIZED_TIME
-	plane[JF.EffectorFeatures.EFFECTIVEDISTANCE] = 2 / STANDARDIZED_SCALE
-	plane[JF.EffectorFeatures.AMMORATE] = 1 / 2
-	plane[JF.EffectorFeatures.ENERGYRATE] = 1 / MAX_RANGE # Arena[JF.ArenaFeatures.SCALE] / DISPLACEMENT_NORMALIZATION
-	return boundsChecked(plane)
-
+	x_range = (0, 0)
+	y_range = (0, Arena[JF.ArenaFeatures.FRONTAGE])
+	static = False
+	speed = 1000
+	range = 1000
+	time = 2
+	effective_distance = 2
+	ammo = 2
+	return newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo)
 
 def newHelicopter(Arena):
 	"""
@@ -71,7 +68,6 @@ def newHelicopter(Arena):
 	It can engage 2x as many targets, but it is more susceptible to counter-fire (If I can see them, they can see me)
 	"""
 	pass
-
 
 def newBoat(Arena):
 	"""
@@ -81,25 +77,17 @@ def newBoat(Arena):
 	Skippy says "whatever is in the launchers is what you have.  You must re-arm at a jetty"
 	Skippy also says "The ship must have RADAR lock until the missile hits.  You cannot select a new target until the munitions impact"
 	"""
-	ActiveTime = 8
-	TimeFactor = min(ActiveTime, Arena[JF.ArenaFeatures.TIMEHORIZON])
 	if Arena[JF.ArenaFeatures.COASTLINE] <= 0:
 		raise Exception("No water present in Arena")
-	boat = np.zeros(len(JF.EffectorFeatures))
-	boat[JF.EffectorFeatures.XPOS] = random.uniform(0, Arena[JF.ArenaFeatures.COASTLINE]) / STANDARDIZED_SCALE
-	boat[JF.EffectorFeatures.YPOS] = random.uniform(0, Arena[JF.ArenaFeatures.FRONTAGE]) / STANDARDIZED_SCALE
-	boat[JF.EffectorFeatures.STARTX] = boat[JF.EffectorFeatures.XPOS]
-	boat[JF.EffectorFeatures.STARTY] = boat[JF.EffectorFeatures.YPOS]
-	boat[JF.EffectorFeatures.STATIC] = True
-	boat[JF.EffectorFeatures.SPEED] = 4939 / (STANDARDIZED_SCALE * MAX_SPEED)
-	boat[JF.EffectorFeatures.AMMOLEFT] = 1
-	boat[JF.EffectorFeatures.ENERGYLEFT] = 0
-	boat[JF.EffectorFeatures.TIMELEFT] = TimeFactor / STANDARDIZED_TIME
-	boat[JF.EffectorFeatures.EFFECTIVEDISTANCE] = 45 / STANDARDIZED_SCALE
-	boat[JF.EffectorFeatures.AMMORATE] = 1 / 16  # Could also pick at random to simulate previous engagements.  random.randint(1,16)
-	boat[JF.EffectorFeatures.ENERGYRATE] = 0
-	return boundsChecked(boat)
-
+	x_range = (0, Arena[JF.ArenaFeatures.COASTLINE])
+	y_range = (0, Arena[JF.ArenaFeatures.FRONTAGE])
+	static = True
+	speed = 4939
+	range = 0
+	time = 8
+	effective_distance = 45
+	ammo = 16
+	return newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo)
 
 def NewArtillery(Arena):
 	"""
@@ -109,80 +97,54 @@ def NewArtillery(Arena):
 
 	This could also be "tube artillery", but that is more about support than destruction.  This will only support direct-fire engagements for front-line units.
 	"""
-	ActiveTime = 8
-	TimeFactor = min(ActiveTime, Arena[JF.ArenaFeatures.TIMEHORIZON])
-	artillery = np.zeros(len(JF.EffectorFeatures))
-	artillery[JF.EffectorFeatures.XPOS] = random.uniform(Arena[JF.ArenaFeatures.COASTLINE], Arena[JF.ArenaFeatures.FRONTLINE]) / STANDARDIZED_SCALE
-	artillery[JF.EffectorFeatures.YPOS] = random.uniform(0, Arena[JF.ArenaFeatures.FRONTAGE]) / STANDARDIZED_SCALE
-	artillery[JF.EffectorFeatures.STARTX] = artillery[JF.EffectorFeatures.XPOS]
-	artillery[JF.EffectorFeatures.STARTY] = artillery[JF.EffectorFeatures.YPOS]
-	artillery[JF.EffectorFeatures.STATIC] = True
-	artillery[JF.EffectorFeatures.SPEED] = 6000 / (STANDARDIZED_SCALE * MAX_SPEED)
-	artillery[JF.EffectorFeatures.AMMOLEFT] = 1
-	artillery[JF.EffectorFeatures.ENERGYLEFT] = 0
-	artillery[JF.EffectorFeatures.TIMELEFT] = TimeFactor / STANDARDIZED_TIME
-	artillery[JF.EffectorFeatures.EFFECTIVEDISTANCE] = 45 / STANDARDIZED_SCALE
-	artillery[JF.EffectorFeatures.AMMORATE] = 1 / 20
-	artillery[JF.EffectorFeatures.ENERGYRATE] = 0
-	return boundsChecked(artillery)
-
+	x_range = (Arena[JF.ArenaFeatures.COASTLINE], Arena[JF.ArenaFeatures.FRONTLINE])
+	y_range = (0, Arena[JF.ArenaFeatures.FRONTAGE])
+	static = True
+	speed = 6000
+	range = 0
+	time = 8
+	effective_distance = 45
+	ammo = 20
+	return newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo)
 
 def NewArmoured(Arena):
 	"""
 	Tanks have near infinite amount of ammunition.
 	"""
-	ActiveTime = 8
-	TimeFactor = min(ActiveTime, Arena[JF.ArenaFeatures.TIMEHORIZON])
-	armoured = np.zeros(len(JF.EffectorFeatures))
-	armoured[JF.EffectorFeatures.XPOS] = random.uniform(Arena[JF.ArenaFeatures.COASTLINE], Arena[JF.ArenaFeatures.FRONTLINE]) / STANDARDIZED_SCALE
-	armoured[JF.EffectorFeatures.YPOS] = random.uniform(0, Arena[JF.ArenaFeatures.FRONTAGE]) / STANDARDIZED_SCALE
-	armoured[JF.EffectorFeatures.STARTX] = armoured[JF.EffectorFeatures.XPOS]
-	armoured[JF.EffectorFeatures.STARTY] = armoured[JF.EffectorFeatures.YPOS]
-	armoured[JF.EffectorFeatures.STATIC] = False
-	armoured[JF.EffectorFeatures.SPEED] = 40 / (STANDARDIZED_SCALE * MAX_SPEED)
-	armoured[JF.EffectorFeatures.AMMOLEFT] = 1
-	armoured[JF.EffectorFeatures.ENERGYLEFT] = 250 / (STANDARDIZED_SCALE * MAX_RANGE)
-	armoured[JF.EffectorFeatures.TIMELEFT] = TimeFactor / STANDARDIZED_TIME
-	armoured[JF.EffectorFeatures.EFFECTIVEDISTANCE] = 0.5 / STANDARDIZED_SCALE
-	armoured[JF.EffectorFeatures.AMMORATE] = 1 / 13
-	armoured[JF.EffectorFeatures.ENERGYRATE] = 1 / MAX_RANGE # Arena[JF.ArenaFeatures.SCALE] / DISPLACEMENT_NORMALIZATION
-	return boundsChecked(armoured)
-
+	x_range = (Arena[JF.ArenaFeatures.COASTLINE], Arena[JF.ArenaFeatures.FRONTLINE])
+	y_range = (0, Arena[JF.ArenaFeatures.FRONTAGE])
+	static = False
+	speed = 40
+	range = 250
+	time = 8
+	effective_distance = 0.5
+	ammo = 13
+	return newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo)
 
 def newInfantry(Arena):
 	"""
 	Infantry engaging infantry will generally wipe each other out, so are only able to engage once.
 	"""
-	ActiveTime = 8
-	TimeFactor = min(ActiveTime, Arena[JF.ArenaFeatures.TIMEHORIZON])
-	infantry = np.zeros(len(JF.EffectorFeatures))
-	infantry[JF.EffectorFeatures.XPOS] = random.uniform(Arena[JF.ArenaFeatures.COASTLINE], Arena[JF.ArenaFeatures.FRONTLINE]) / STANDARDIZED_SCALE
-	infantry[JF.EffectorFeatures.YPOS] = random.uniform(0, Arena[JF.ArenaFeatures.FRONTAGE]) / STANDARDIZED_SCALE
-	infantry[JF.EffectorFeatures.STARTX] = infantry[JF.EffectorFeatures.XPOS]
-	infantry[JF.EffectorFeatures.STARTY] = infantry[JF.EffectorFeatures.YPOS]
-	infantry[JF.EffectorFeatures.STATIC] = False
-	infantry[JF.EffectorFeatures.SPEED] = 5 / (STANDARDIZED_SCALE * MAX_SPEED)
-	infantry[JF.EffectorFeatures.AMMOLEFT] = 1
-	infantry[JF.EffectorFeatures.ENERGYLEFT] = 20 / (STANDARDIZED_SCALE * MAX_RANGE)
-	infantry[JF.EffectorFeatures.TIMELEFT] = TimeFactor / STANDARDIZED_TIME
-	infantry[JF.EffectorFeatures.EFFECTIVEDISTANCE] = 0.75 / STANDARDIZED_SCALE
-	infantry[JF.EffectorFeatures.AMMORATE] = 1 / 2
-	infantry[JF.EffectorFeatures.ENERGYRATE] = 1 / MAX_RANGE # Arena[JF.ArenaFeatures.SCALE] / DISPLACEMENT_NORMALIZATION
-	return boundsChecked(infantry)
-
+	x_range = (Arena[JF.ArenaFeatures.COASTLINE], Arena[JF.ArenaFeatures.FRONTLINE])
+	y_range = (0, Arena[JF.ArenaFeatures.FRONTAGE])
+	static = False
+	speed = 5
+	range = 20
+	time = 8
+	effective_distance = 0.75
+	ammo = 2
+	return newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo)
 
 def newTarget(Arena):
 	target = np.zeros(len(JF.TaskFeatures))
-	target[JF.TaskFeatures.XPOS] = random.uniform(Arena[JF.ArenaFeatures.FRONTLINE], 1) / STANDARDIZED_SCALE
+	target[JF.TaskFeatures.XPOS] = random.uniform(Arena[JF.ArenaFeatures.FRONTLINE], Arena[JF.ArenaFeatures.SCALE]) / STANDARDIZED_SCALE
 	target[JF.TaskFeatures.YPOS] = random.uniform(0, Arena[JF.ArenaFeatures.FRONTAGE]) / STANDARDIZED_SCALE
 	target[JF.TaskFeatures.VALUE] = random.uniform(0.35, 0.65)
 	target[JF.TaskFeatures.SELECTED] = 0
-	return boundsChecked(target)
-
+	return target
 
 def EuclideanDistance(effector, task):
 	return math.sqrt( (effector[JF.EffectorFeatures.XPOS] - task[JF.TaskFeatures.XPOS])**2 + (effector[JF.EffectorFeatures.YPOS] - task[JF.TaskFeatures.YPOS])**2)
-
 
 def returnDistance(effector, task):
 	EucDistance = EuclideanDistance(effector, task)
@@ -191,6 +153,7 @@ def returnDistance(effector, task):
 	newY = effector[JF.EffectorFeatures.YPOS] + (task[JF.TaskFeatures.YPOS] - effector[JF.EffectorFeatures.YPOS]) * travelDistance / EucDistance
 	returnTrip = math.sqrt((effector[JF.EffectorFeatures.STARTX] - newX)**2 + (effector[JF.EffectorFeatures.STARTY] - newY)**2)
 	return travelDistance + returnTrip
+
 
 class ProblemGenerator():
 
@@ -226,7 +189,6 @@ class ProblemGenerator():
 		problem['Opportunities'] = self.opportunities
 		return problem
 
-
 	def saveProblem(filename):
 		problem = self.formatProblem()
 		with open(filename, 'w') as file:
@@ -236,7 +198,6 @@ class ProblemGenerator():
 		self.targets = []
 		for i in range(qty):
 			self.targets.append(newTarget(self.arena))
-
 
 	def populateOpportunities(self):
 		"""
@@ -273,7 +234,6 @@ class ProblemGenerator():
 				else:
 					self.opportunities[i][j][JF.OpportunityFeatures.PSUCCESS] = 0
 
-
 def AllPlanes():
 	arena = np.zeros(len(JF.ArenaFeatures))
 	arena[JF.ArenaFeatures.SCALE] = 500
@@ -282,10 +242,8 @@ def AllPlanes():
 	arena[JF.ArenaFeatures.TIMEHORIZON] = 4
 	planes = random.randint(9,13)
 	targets = random.randint(10, 50)
-
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, planes=planes)
-
 
 def BoatsBoatsBoats():
 	arena = np.zeros(len(JF.ArenaFeatures))
@@ -294,10 +252,8 @@ def BoatsBoatsBoats():
 	arena[JF.ArenaFeatures.FRONTLINE] = 0.301 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.TIMEHORIZON] = 4
 	targets = random.randint(10, 50)
-
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, frigates=random.randint(9,13))
-
 
 def InfantryOnly():
 	arena = np.zeros(len(JF.ArenaFeatures))
@@ -305,7 +261,6 @@ def InfantryOnly():
 	arena[JF.ArenaFeatures.COASTLINE] = 0.01 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.FRONTLINE] = 0.4 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.TIMEHORIZON] = 8
-
 	targets = random.randint(4, 9)
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, infantry=random.randint(5,15))
@@ -323,12 +278,9 @@ def CombatArms():
 	artillery = heapq.heappop(rands)
 	armoured = heapq.heappop(rands) - artillery
 	infantry = total - (artillery + armoured)
-
 	targets = random.randint(10, 30)
-
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, artillery=artillery, armoured=armoured, infantry=infantry)
-
 
 def Tiny():
 	arena = np.zeros(len(JF.ArenaFeatures))
@@ -343,6 +295,5 @@ def Tiny():
 	planes = 1
 	infantry = 1
 	targets = 2
-
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, infantry=infantry, armoured=armoured, artillery=artillery)
