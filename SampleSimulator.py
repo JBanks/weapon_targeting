@@ -13,7 +13,6 @@ SPEED_CORRECTION = PG.STANDARDIZED_TIME * PG.MAX_SPEED
 def EuclideanDistance(effector, task):
 	return math.sqrt((effector[JF.EffectorFeatures.XPOS] - task[JF.TaskFeatures.XPOS])**2 + (effector[JF.EffectorFeatures.YPOS] - task[JF.TaskFeatures.YPOS])**2)
 
-
 def returnDistance(effector, task):
 	EucDistance = Simulation.EuclideanDistance(effector, task)
 	travelDistance = max(EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE], 0)
@@ -44,7 +43,6 @@ def printState(state):
 		print(f"Target: ({state[0, i, pad + JF.TaskFeatures.XPOS]:.4f}, {state[0, i, pad + JF.TaskFeatures.YPOS]:.4f})", end="")
 		print(f"\t{state[0, i, pad + JF.TaskFeatures.VALUE]:.4f}", end="")
 		print(f"\t{state[0, i, pad + JF.TaskFeatures.SELECTED]}")
-
 	pad = len(JF.EffectorFeatures) + len(JF.TaskFeatures)
 	print("\n\nAction\t\tPSucc\tEnergy\ttime\tSelectable\tEucDistance\tReturnDist")
 	for i in range(nbEffector):
@@ -71,7 +69,6 @@ class JeremyAgent():
 				pass
 		return (effector, task)
 
-
 	def learn(state, action, reward, new_state, terminal):
 		pass
 
@@ -90,7 +87,6 @@ class Simulation:
 										# this function will normalize values and create a 3D tensor
 		if problem:
 			self.reset(problem)
-
 
 	def reset(self, problem=None):
 		"""
@@ -129,10 +125,8 @@ class Simulation:
 	def resetState(self, state):
 		pass
 
-
 	def EuclideanDistance(effector, task):
 		return math.sqrt((effector[JF.EffectorFeatures.XPOS] - task[JF.TaskFeatures.XPOS])**2 + (effector[JF.EffectorFeatures.YPOS] - task[JF.TaskFeatures.YPOS])**2)
-
 
 	def returnDistance(effector, task):
 		EucDistance = Simulation.EuclideanDistance(effector, task)
@@ -142,25 +136,27 @@ class Simulation:
 		returnTrip = math.sqrt((effector[JF.EffectorFeatures.STARTX] - newX)**2 + (effector[JF.EffectorFeatures.STARTY] - newY)**2)
 		return travelDistance + returnTrip
 
-
 	def getSchedule(self):
 		"""
 		Return the schedule of events currently chosen.
 		"""
 		# A schedule should be a list of #effector lists where each element is a target along with some other info (eg timing))
-
 		#[[(2 5min), (1 60min)][3, 2, 3][1]]
 		# Effector 1 first hits target 2 (service time 5 min) and then 1 (service time 60 min)
 		# Effector 2 first hits target 3 and then 2, and then 3
 		# Effector 3 first hits target 1
 		return self.schedule
 
-
 	def update(self, action):
 		"""
 		Take an action from an agent and apply that action to the effector specified.
 		"""
-		effectorIndex, taskIndex = action   # Alex passes a 1-hot matrix.  Perform a check and process accordingly
+		if type(action) == tuple:
+			effectorIndex, taskIndex = action
+		else: # Alex passes a 1-hot matrix.  Process accordingly
+			effectorIndex, taskIndex = np.where(action == 1)
+			effectorIndex = int(effectorIndex)
+			taskIndex = int(taskIndex)
 		effector = self.effectorData[effectorIndex, :]
 		task = self.taskData[taskIndex, :]
 		opportunity = self.opportunityData[effectorIndex, taskIndex, :]
@@ -238,7 +234,6 @@ class Simulation:
 
 		return self.FormatState(self.effectorData, self.taskData, self.opportunityData), reward, terminal
 
-
 	def undo(self):
 		"""
 		Return to the previous state.  This can help in a depth-first-search style action selection
@@ -276,11 +271,9 @@ def LoadProblem(filename):
 		problem = json.load(file)
 	return problem
 
-
 def SaveProblem(problem, filename):
 	with open(filename, 'w') as file:
 		json.dump(problem, file)
-
 
 def main():
 	jeremy = 0
