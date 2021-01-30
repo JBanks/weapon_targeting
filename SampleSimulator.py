@@ -8,6 +8,7 @@ import random
 import json
 import math
 
+SPEED_CORRECTION = PG.STANDARDIZED_TIME * PG.MAX_SPEED
 
 def EuclideanDistance(effector, task):
 	return math.sqrt((effector[JF.EffectorFeatures.XPOS] - task[JF.TaskFeatures.XPOS])**2 + (effector[JF.EffectorFeatures.YPOS] - task[JF.TaskFeatures.YPOS])**2)
@@ -43,7 +44,7 @@ def printState(state):
 		print(f"Target: ({state[0, i, pad + JF.TaskFeatures.XPOS]:.4f}, {state[0, i, pad + JF.TaskFeatures.YPOS]:.4f})", end="")
 		print(f"\t{state[0, i, pad + JF.TaskFeatures.VALUE]:.4f}", end="")
 		print(f"\t{state[0, i, pad + JF.TaskFeatures.SELECTED]}")
-	
+
 	pad = len(JF.EffectorFeatures) + len(JF.TaskFeatures)
 	print("\n\nAction\t\tPSucc\tEnergy\ttime\tSelectable\tEucDistance\tReturnDist")
 	for i in range(nbEffector):
@@ -85,7 +86,7 @@ class Simulation:
 	"""
 	def __init__(self, FormatState, problem = None, keepstack = False):
 		self.keepstack = keepstack
-		self.FormatState = FormatState  # In the case of the Neural Network, 
+		self.FormatState = FormatState  # In the case of the Neural Network,
 										# this function will normalize values and create a 3D tensor
 		if problem:
 			self.reset(problem)
@@ -148,10 +149,10 @@ class Simulation:
 		"""
 		# A schedule should be a list of #effector lists where each element is a target along with some other info (eg timing))
 
-		#[[(2 5min), (1 60min)][3, 2, 3][1]] 
+		#[[(2 5min), (1 60min)][3, 2, 3][1]]
 		# Effector 1 first hits target 2 (service time 5 min) and then 1 (service time 60 min)
 		# Effector 2 first hits target 3 and then 2, and then 3
-		# Effector 3 first hits target 1 
+		# Effector 3 first hits target 1
 		return self.schedule
 
 
@@ -161,16 +162,16 @@ class Simulation:
 		"""
 		effectorIndex, taskIndex = action   # Alex passes a 1-hot matrix.  Perform a check and process accordingly
 		effector = self.effectorData[effectorIndex, :]
-		task = self.taskData[taskIndex, :] 
-		opportunity = self.opportunityData[effectorIndex, taskIndex, :] 
+		task = self.taskData[taskIndex, :]
+		opportunity = self.opportunityData[effectorIndex, taskIndex, :]
 		if opportunity[JF.OpportunityFeatures.SELECTABLE] == False:
 			raise Exception(f"This action is not selectable. Effector: {effectorIndex} Task: {taskIndex}")
-		
+
 		#first copy the tensor (not by ref.. make sure to do actual copy)
 		if self.keepstack:
 			#TODO: make sure this is a copy, not a reference
-			self.history.append((self.effectorData, self.taskData, self.opportunityData, self.schedule, self.previousPSuccess)) 
-		#Do not use history, update the schedule directly.  
+			self.history.append((self.effectorData, self.taskData, self.opportunityData, self.schedule, self.previousPSuccess))
+		#Do not use history, update the schedule directly.
 		#Make a separate stack for the schedule so that we don't need to iterate through the whole state history
 		self.schedule[effectorIndex].append((taskIndex, opportunity[JF.OpportunityFeatures.TIMECOST]))
 
@@ -183,10 +184,10 @@ class Simulation:
 		else:
 			pass #We can take action against the target from our current position
 
-		effector[JF.EffectorFeatures.TIMELEFT] -= opportunity[JF.OpportunityFeatures.TIMECOST] 
+		effector[JF.EffectorFeatures.TIMELEFT] -= opportunity[JF.OpportunityFeatures.TIMECOST]
 		effector[JF.EffectorFeatures.ENERGYLEFT] -= opportunity[JF.OpportunityFeatures.ENERGYCOST]
-		effector[JF.EffectorFeatures.AMMOLEFT] -= effector[JF.EffectorFeatures.AMMORATE] 
-		#We are dealing with expected plan, not an actual instance of a plan.  
+		effector[JF.EffectorFeatures.AMMOLEFT] -= effector[JF.EffectorFeatures.AMMORATE]
+		#We are dealing with expected plan, not an actual instance of a plan.
 		#Damage will be relative to pSuccess rather than sometimes being right and sometimes being wrong
 		reward = opportunity[JF.OpportunityFeatures.PSUCCESS] * task[JF.TaskFeatures.VALUE]
 		self.taskData[taskIndex][JF.TaskFeatures.VALUE] -= reward
@@ -198,23 +199,23 @@ class Simulation:
 				self.opportunityData[i][taskIndex][JF.OpportunityFeatures.SELECTABLE] = False
 				self.opportunityData[i][taskIndex][JF.OpportunityFeatures.PSUCCESS] = 0
 
-		for i in range(0, self.nbTask): 
+		for i in range(0, self.nbTask):
 			EucDistance = Simulation.EuclideanDistance(effector, self.taskData[i])
 			#If it wasn't selectable before, could that change?  If not, drop this set of operations whenever something is already unfeasible
 			if not effector[JF.EffectorFeatures.STATIC]:
 				RTDistance = Simulation.returnDistance(effector, self.taskData[i])
 				travelDistance = max(0, EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE])
 				if (RTDistance > effector[JF.EffectorFeatures.ENERGYLEFT] / (effector[JF.EffectorFeatures.ENERGYRATE]) or
-					effector[JF.EffectorFeatures.TIMELEFT] < RTDistance / (effector[JF.EffectorFeatures.SPEED])):
+					effector[JF.EffectorFeatures.TIMELEFT] < RTDistance / (effector[JF.EffectorFeatures.SPEED] * PG.STANDARDIZED_TIME)):
 					print(f"Return Distance too far: {RTDistance} > {effector[JF.EffectorFeatures.ENERGYLEFT]} / {(effector[JF.EffectorFeatures.ENERGYRATE])} or ")
-					print(f"{effector[JF.EffectorFeatures.TIMELEFT]} < {RTDistance} / {(effector[JF.EffectorFeatures.SPEED])}")
+					print(f"{effector[JF.EffectorFeatures.TIMELEFT]} < {RTDistance} / {(effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)}")
 					self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
 				else:
-					self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = travelDistance / (effector[JF.EffectorFeatures.SPEED]) #+ effector[JF.EffectorFeatures.DUTYCYCLE]
+					self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = travelDistance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION) #+ effector[JF.EffectorFeatures.DUTYCYCLE]
 					self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] = travelDistance * effector[JF.EffectorFeatures.ENERGYRATE] # Energy is related to fuel or essentially range
 			else:
 				if EucDistance <= effector[JF.EffectorFeatures.EFFECTIVEDISTANCE]:
-					self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = EucDistance / (effector[JF.EffectorFeatures.SPEED]) #effector[JF.EffectorFeatures.DUTYCYCLE]
+					self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = EucDistance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION) #effector[JF.EffectorFeatures.DUTYCYCLE]
 					self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] = 0 #Energy is related to fuel or essentially range
 				else:
 					self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
@@ -229,7 +230,7 @@ class Simulation:
 			if self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] == False:
 				self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.PSUCCESS] = 0
 
-		#self.opportunityData[:,:,JF.OpportunityFeatures.PSUCCESS] &= self.opportunityData[:,:,JF.OpportunityFeatures.SELECTABLE] 
+		#self.opportunityData[:,:,JF.OpportunityFeatures.PSUCCESS] &= self.opportunityData[:,:,JF.OpportunityFeatures.SELECTABLE]
 		if np.sum(self.opportunityData[:, :, JF.OpportunityFeatures.SELECTABLE]) >= 1:
 			terminal = False
 		else:
@@ -287,7 +288,7 @@ def main():
 	agents = [JeremyAgent, AlexAgent]
 	agentSelection = 0
 
-	problemGenerators = [PG.AllPlanes, PG.NoPlanes, PG.InfantryOnly, PG.CombatArms, PG.BoatsBoatsBoats]
+	problemGenerators = [PG.AllPlanes, PG.InfantryOnly, PG.CombatArms, PG.BoatsBoatsBoats]
 	problemGenerator = random.choice(problemGenerators)
 
 	problemGenerator = PG.Tiny
