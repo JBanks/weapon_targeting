@@ -6,7 +6,12 @@ import ProblemGenerators as PG
 import JFAFeatures as JF
 import numpy as np
 import copy
+import time
 
+"""
+This node class is used to simplify storage and comparisson between different
+states that are reached by the search algorithm.
+"""
 class Node:
     def __init__(self, g, action, state, reward, terminal = False):
         self.g = g
@@ -58,6 +63,7 @@ class Node:
 
 """
 This is an A* implementation to search for a solution to a given JFA problem.
+TODO: This doesn't appear to be working correctly.  I suspect that it is selecting the highest return every time and then ending.
 """
 def AStar(state):
     """
@@ -69,20 +75,21 @@ def AStar(state):
         remaining_reward = 0
         for i, target in enumerate(state['Targets']):
             if target[JF.TaskFeatures.SELECTED] == 1:
-                continue
+                continue # This task has already been selected the maximum number of times.
             remaining_moves = int(min((1 - target[JF.TaskFeatures.SELECTED]) * 2, sum(state['Opportunities'][:, i, JF.OpportunityFeatures.SELECTABLE])))
             if not remaining_moves:
-                continue
+                continue  # The minimum between the number of hits left on a target, and eligible effectors is zero.
             value = target[JF.TaskFeatures.VALUE]
-            top = np.argpartition(state['Opportunities'][:, i, JF.OpportunityFeatures.PSUCCESS], remaining_moves)[:remaining_moves]
-            for effector in top:
+            top = np.argpartition(state['Opportunities'][:, i, JF.OpportunityFeatures.PSUCCESS], remaining_moves)[:remaining_moves] # select the top 'n' effectors.
+            for effector in top: # Reduce the value as if both of those effectors could take the action.
                 remaining_reward += value * state['Opportunities'][effector, i, JF.OpportunityFeatures.PSUCCESS]
                 value *= (1 - state['Opportunities'][effector, i, JF.OpportunityFeatures.PSUCCESS])
-        return remaining_reward
+        return remaining_reward # Return the remaining reward if all moves were possible.
 
     node = Node(sum(state['Targets'][:,JF.TaskFeatures.VALUE]), None, state, 0)
     expansions = 0
     branchFactor = 0
+    duplicate_states = 0
     frontier = []
     explored = []
     heapq.heappush(frontier, node)
@@ -91,6 +98,7 @@ def AStar(state):
         if node in explored:
             continue
         expansions += 1
+        print(f"\rExpansions: {expansions}, Duplicates: {duplicate_states}", end = "")
         if hasattr(node, 'parent'):
             node.g = node.parent.g - node.reward
         if node.terminal == True:
@@ -99,27 +107,33 @@ def AStar(state):
         state = node.state
         for effector, target in np.stack(np.where(state['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE] == True), axis = 1):
             action = (effector, target)
-            new_state, reward, terminal = env.update_state(copy.deepcopy(state), action)
-            g = node.g - reward
-            h = heuristic(new_state)
+            new_state, reward, terminal = env.update_state(action, copy.deepcopy(state))
+            g = node.g - reward # The remaining value after the action taken
+            h = heuristic(new_state) # The possible remaining value assuming that all of the best actions can be taken
             child = Node(g + h, action, new_state, reward, terminal)
             child.Parent(node)
             branchFactor += 1
-            print(f"checking action: {action}")
+            #print(f"checking action: {action}")
             if child not in explored and child not in frontier:
-                print(f"state not found.  g: {g} reward: {reward} prev action {node.action}")
+                #print(f"state not found.  g: {g} reward: {reward} prev action {node.action}")
                 heapq.heappush(frontier, child)
             elif child in frontier and child.g < frontier[frontier.index(child)].g:
-                print(f"state updated")
+                # This shouldn't ever happen.  If we end up in the same state, then we should have the same reward.  must be a floating point bug.
+                print(f"state updated.  That's weird...")
                 heapq.heappush(frontier, child)
-    return "failed", None, None, None
+            else:
+                duplicate_states += 1
+    return "failed", None, expansions, branchFactor
 
 if __name__ == '__main__':
+    start_time = time.time()
     env = Sim.Simulation(Sim.state_to_dict)
-    simProblem = PG.Tiny()
+    simProblem = PG.combatArms()
     state = env.reset(simProblem) #get initial state or load a new problem
-    Sim.printState(Sim.MergeState(env.effectorData, env.taskData, env.opportunityData))
+    print(f"Problem size: {(len(state['Effectors']), len(state['Targets']))}")
+    #Sim.printState(Sim.MergeState(env.effectorData, env.taskData, env.opportunityData))
     rewards_available = sum(state['Targets'][:,JF.TaskFeatures.VALUE])
     solution, g, expansions, branchFactor = AStar(state)
-    Sim.printState(Sim.MergeState(env.effectorData, env.taskData, env.opportunityData)) 
-    print(f"Expansions: {expansions}, branchFactor: {branchFactor}, Reward: {g} / {rewards_available}, Steps: {solution}")
+    Sim.printState(Sim.MergeState(env.effectorData, env.taskData, env.opportunityData))
+    end_time = time.time()
+    print(f"Elapsed: {end_time - start_time}, Expansions: {expansions}, branchFactor: {branchFactor}, Reward: {g} / {rewards_available}, Steps: {solution}")

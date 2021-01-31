@@ -10,11 +10,11 @@ import math
 
 SPEED_CORRECTION = PG.STANDARDIZED_TIME * PG.MAX_SPEED
 
-def EuclideanDistance(effector, task):
+def euclideanDistance(effector, task):
 	return math.sqrt((effector[JF.EffectorFeatures.XPOS] - task[JF.TaskFeatures.XPOS])**2 + (effector[JF.EffectorFeatures.YPOS] - task[JF.TaskFeatures.YPOS])**2)
 
 def returnDistance(effector, task):
-	EucDistance = Simulation.EuclideanDistance(effector, task)
+	EucDistance = Simulation.euclideanDistance(effector, task)
 	travelDistance = max(EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE], 0)
 	newX = effector[JF.EffectorFeatures.XPOS] + (task[JF.TaskFeatures.XPOS] - effector[JF.EffectorFeatures.XPOS]) * travelDistance / EucDistance
 	newY = effector[JF.EffectorFeatures.YPOS] + (task[JF.TaskFeatures.YPOS] - effector[JF.EffectorFeatures.YPOS]) * travelDistance / EucDistance
@@ -47,7 +47,7 @@ def printState(state):
 	print("\n\nAction\t\tPSucc\tEnergy\ttime\tSelectable\tEucDistance\tReturnDist")
 	for i in range(nbEffector):
 		for j in range(nbTask):
-			print(f"({i:2},{j:2}):\t{state[i, j, pad + JF.OpportunityFeatures.PSUCCESS]:.4}\t{state[i, j, pad + JF.OpportunityFeatures.ENERGYCOST]:.4f}\t{state[i, j, pad + JF.OpportunityFeatures.TIMECOST]:.4f}\t{trueFalseStrings[int(state[i, j, pad + JF.OpportunityFeatures.SELECTABLE])]}\t\t{EuclideanDistance(state[i, 0, :], state[0, j, len(JF.EffectorFeatures):]):.6f}\t{returnDistance(state[i, 0, :], state[0, j, len(JF.EffectorFeatures):]):.6f}")
+			print(f"({i:2},{j:2}):\t{state[i, j, pad + JF.OpportunityFeatures.PSUCCESS]:.4}\t{state[i, j, pad + JF.OpportunityFeatures.ENERGYCOST]:.4f}\t{state[i, j, pad + JF.OpportunityFeatures.TIMECOST]:.4f}\t{trueFalseStrings[int(state[i, j, pad + JF.OpportunityFeatures.SELECTABLE])]}\t\t{euclideanDistance(state[i, 0, :], state[0, j, len(JF.EffectorFeatures):]):.6f}\t{returnDistance(state[i, 0, :], state[0, j, len(JF.EffectorFeatures):]):.6f}")
 
 
 class JeremyAgent():
@@ -81,9 +81,9 @@ class Simulation:
 	"""
 	Simulate a warfare scenario in which a set of effectors complete a set of tasks
 	"""
-	def __init__(self, FormatState, problem = None, keepstack = False):
+	def __init__(self, formatState, problem = None, keepstack = False):
 		self.keepstack = keepstack
-		self.FormatState = FormatState  # In the case of the Neural Network,
+		self.formatState = formatState  # In the case of the Neural Network,
 										# this function will normalize values and create a 3D tensor
 		if problem:
 			self.reset(problem)
@@ -97,11 +97,11 @@ class Simulation:
 		Reuse the current problem and set all variables back to their original values
 		"""
 		if problem is None:
-			if not hasattr('self', InitialProblem):
+			if not hasattr(self, 'initialProblem'):
 				raise Exception("You must provide an intial problem to solve.")
-			problem = self.InitialProblem
+			problem = self.initialProblem
 		else:
-			self.InitialProblem = problem
+			self.initialProblem = problem
 		self.reward = 0
 		self.scale = problem['Arena'][JF.ArenaFeatures.SCALE]
 		self.coastline = problem['Arena'][JF.ArenaFeatures.COASTLINE]
@@ -122,16 +122,16 @@ class Simulation:
 		self.history = []
 		self.schedule = [[] for _ in range(self.nbEffector)]
 		self.previousPSuccess = [[] for _ in range(self.nbTask)]
-		return self.FormatState(self.effectorData, self.taskData, self.opportunityData)
+		return self.formatState(self.effectorData, self.taskData, self.opportunityData)
 
 	def resetState(self, state):
 		pass
 
-	def EuclideanDistance(effector, task):
+	def euclideanDistance(effector, task):
 		return math.sqrt((effector[JF.EffectorFeatures.XPOS] - task[JF.TaskFeatures.XPOS])**2 + (effector[JF.EffectorFeatures.YPOS] - task[JF.TaskFeatures.YPOS])**2)
 
 	def returnDistance(effector, task):
-		EucDistance = Simulation.EuclideanDistance(effector, task)
+		EucDistance = Simulation.euclideanDistance(effector, task)
 		travelDistance = max(EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE], 0)
 		newX = effector[JF.EffectorFeatures.XPOS] + (task[JF.TaskFeatures.XPOS] - effector[JF.EffectorFeatures.XPOS]) * travelDistance / EucDistance
 		newY = effector[JF.EffectorFeatures.YPOS] + (task[JF.TaskFeatures.YPOS] - effector[JF.EffectorFeatures.YPOS]) * travelDistance / EucDistance
@@ -173,7 +173,7 @@ class Simulation:
 		#Make a separate stack for the schedule so that we don't need to iterate through the whole state history
 		self.schedule[effectorIndex].append((taskIndex, opportunity[JF.OpportunityFeatures.TIMECOST]))
 
-		EucDistance = Simulation.EuclideanDistance(effector, task)
+		EucDistance = Simulation.euclideanDistance(effector, task)
 		travelDistance = EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE]
 
 		if travelDistance > 0: #Calculate the updated position
@@ -198,15 +198,16 @@ class Simulation:
 				self.opportunityData[i][taskIndex][JF.OpportunityFeatures.PSUCCESS] = 0
 
 		for i in range(0, self.nbTask):
-			EucDistance = Simulation.EuclideanDistance(effector, self.taskData[i])
+			EucDistance = Simulation.euclideanDistance(effector, self.taskData[i])
 			#If it wasn't selectable before, could that change?  If not, drop this set of operations whenever something is already unfeasible
 			if not effector[JF.EffectorFeatures.STATIC]:
 				RTDistance = Simulation.returnDistance(effector, self.taskData[i])
 				travelDistance = max(0, EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE])
 				if (RTDistance > effector[JF.EffectorFeatures.ENERGYLEFT] / (effector[JF.EffectorFeatures.ENERGYRATE]) or
-					effector[JF.EffectorFeatures.TIMELEFT] < RTDistance / (effector[JF.EffectorFeatures.SPEED] * PG.STANDARDIZED_TIME)):
-					# print(f"Return Distance too far: {RTDistance} > {effector[JF.EffectorFeatures.ENERGYLEFT]} / {(effector[JF.EffectorFeatures.ENERGYRATE])} or ")
-					# print(f"{effector[JF.EffectorFeatures.TIMELEFT]} < {RTDistance} / {(effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)}")
+					effector[JF.EffectorFeatures.TIMELEFT] < RTDistance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)):
+					print(f"Effector: {effectorIndex}, Target: {i}")
+					print(f"Dist: {RTDistance > effector[JF.EffectorFeatures.ENERGYLEFT] / effector[JF.EffectorFeatures.ENERGYRATE]} : {RTDistance} > {effector[JF.EffectorFeatures.ENERGYLEFT]} / {effector[JF.EffectorFeatures.ENERGYRATE]}")
+					print(f"Time: {effector[JF.EffectorFeatures.TIMELEFT] < RTDistance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)} : {effector[JF.EffectorFeatures.TIMELEFT]} < {RTDistance} / {effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION}")
 					self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
 				else:
 					self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = travelDistance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION) #+ effector[JF.EffectorFeatures.DUTYCYCLE]
@@ -234,12 +235,17 @@ class Simulation:
 		else:
 			terminal = True
 
-		return self.FormatState(self.effectorData, self.taskData, self.opportunityData), reward, terminal
+		return self.formatState(self.effectorData, self.taskData, self.opportunityData), reward, terminal
 
-	def update_state(self, state, action):
+	def update_state(self, action, state = None):
 		"""
 		Take an action from an agent and apply that action to the effector specified.
 		"""
+		if state is None:
+			effectorData, taskData, opportunityData = self.effectorData, self.taskData, self.opportunityData
+		else:
+			effectorData, taskData, opportunityData = unMergeState(state)
+
 		if type(action) == tuple:
 			effectorIndex, taskIndex = action
 		else: # Alex passes a 1-hot matrix.  Process accordingly
@@ -247,15 +253,13 @@ class Simulation:
 			effectorIndex = int(effectorIndex)
 			taskIndex = int(taskIndex)
 
-		effectorData, taskData, opportunityData = UnMergeState(state)
-
 		effector = effectorData[effectorIndex, :]
 		task = taskData[taskIndex, :]
 		opportunity = opportunityData[effectorIndex, taskIndex, :]
 		if opportunity[JF.OpportunityFeatures.SELECTABLE] == False:
 			raise Exception(f"This action is not selectable. Effector: {effectorIndex} Task: {taskIndex}")
 
-		EucDistance = Simulation.EuclideanDistance(effector, task)
+		EucDistance = Simulation.euclideanDistance(effector, task)
 		travelDistance = EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE]
 
 		if travelDistance > 0: #Calculate the updated position
@@ -280,7 +284,7 @@ class Simulation:
 				opportunityData[i][taskIndex][JF.OpportunityFeatures.PSUCCESS] = 0
 
 		for i in range(0, self.nbTask):
-			EucDistance = Simulation.EuclideanDistance(effector, self.taskData[i])
+			EucDistance = Simulation.euclideanDistance(effector, self.taskData[i])
 			#If it wasn't selectable before, could that change?  If not, drop this set of operations whenever something is already unfeasible
 			if not effector[JF.EffectorFeatures.STATIC]:
 				RTDistance = Simulation.returnDistance(effector, self.taskData[i])
@@ -316,8 +320,7 @@ class Simulation:
 		else:
 			terminal = True
 
-		return self.FormatState(effectorData, taskData, opportunityData), reward, terminal
-
+		return self.formatState(effectorData, taskData, opportunityData), reward, terminal
 
 	def undo(self):
 		"""
@@ -326,7 +329,7 @@ class Simulation:
 		self.effectorData, self.taskData, self.opportunityData, self.schedule, self.previousPSuccess = self.history.pop()
 
 
-def MergeState(effectorData, taskData, opportunityData):
+def mergeState(effectorData, taskData, opportunityData):
 	"""
 	Convert values from real-world to normalized [0,1] and convert representation from vector to 3D tensor
 
@@ -352,7 +355,7 @@ def state_to_dict(effectorData, taskData, opportunityData):
 	state['Opportunities'] = opportunityData
 	return state
 
-def UnMergeState(state):
+def unMergeState(state):
 	if type(state) == dict:
 		effectorData = state['Effectors']
 		taskData = state['Targets']
@@ -363,12 +366,12 @@ def UnMergeState(state):
 		opportunityData = state[:,:,len(JF.EffectorFeatures) + len(JF.TaskFeatures):]
 	return effectorData, taskData, opportunityData
 
-def LoadProblem(filename):
+def loadProblem(filename):
 	with open(filename, 'r') as file:
 		problem = json.load(file)
 	return problem
 
-def SaveProblem(problem, filename):
+def saveProblem(problem, filename):
 	with open(filename, 'w') as file:
 		json.dump(problem, file)
 
@@ -378,12 +381,12 @@ def main():
 	agents = [JeremyAgent, AlexAgent]
 	agentSelection = 0
 
-	problemGenerators = [PG.AllPlanes, PG.InfantryOnly, PG.CombatArms, PG.BoatsBoatsBoats]
+	problemGenerators = [PG.allPlanes, PG.infantryOnly, PG.combatArms, PG.boatsBoatsBoats]
 	problemGenerator = random.choice(problemGenerators)
 
-	problemGenerator = PG.Tiny
+	problemGenerator = PG.tiny
 
-	env = Simulation(MergeState, keepstack=True)
+	env = Simulation(mergeState, keepstack=True)
 	agent = agents[agentSelection]
 	simProblem = problemGenerator()
 	state = env.reset(simProblem) #get initial state or load a new problem

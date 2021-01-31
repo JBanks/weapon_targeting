@@ -10,6 +10,7 @@ MAX_RANGE = 1000
 DISPLACEMENT_NORMALIZATION = max(MAX_SPEED, MAX_RANGE)
 STANDARDIZED_SCALE = 500
 STANDARDIZED_TIME = 12
+SPEED_CORRECTION = STANDARDIZED_TIME * MAX_SPEED
 
 def loadProblem(filename):
 	problem = {}
@@ -89,7 +90,7 @@ def newBoat(Arena):
 	ammo = 16
 	return newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo)
 
-def NewArtillery(Arena):
+def newArtillery(Arena):
 	"""
 	This will be a "missile battery", which has 9 launchers and can fire 12 missiles.  Could hit multiple targets at once.
 	Doug says "the type of target matters a great deal", TODO: look more into this to ensure we properly match PSuccess
@@ -107,7 +108,7 @@ def NewArtillery(Arena):
 	ammo = 20
 	return newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo)
 
-def NewArmoured(Arena):
+def newArmoured(Arena):
 	"""
 	Tanks have near infinite amount of ammunition.
 	"""
@@ -143,11 +144,11 @@ def newTarget(Arena):
 	target[JF.TaskFeatures.SELECTED] = 0
 	return target
 
-def EuclideanDistance(effector, task):
+def euclideanDistance(effector, task):
 	return math.sqrt( (effector[JF.EffectorFeatures.XPOS] - task[JF.TaskFeatures.XPOS])**2 + (effector[JF.EffectorFeatures.YPOS] - task[JF.TaskFeatures.YPOS])**2)
 
 def returnDistance(effector, task):
-	EucDistance = EuclideanDistance(effector, task)
+	EucDistance = euclideanDistance(effector, task)
 	travelDistance = max(EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE], 0)
 	newX = effector[JF.EffectorFeatures.XPOS] + (task[JF.TaskFeatures.XPOS] - effector[JF.EffectorFeatures.XPOS]) * travelDistance / EucDistance
 	newY = effector[JF.EffectorFeatures.YPOS] + (task[JF.TaskFeatures.YPOS] - effector[JF.EffectorFeatures.YPOS]) * travelDistance / EucDistance
@@ -157,7 +158,6 @@ def returnDistance(effector, task):
 
 class ProblemGenerator():
 
-	#TODO: Take in a number of types of effectors, and then generate the problem based on these quantities
 	def __init__(self):
 		self.arena = np.zeros(len(JF.ArenaFeatures))
 		self.effectors = []
@@ -172,9 +172,9 @@ class ProblemGenerator():
 		for i in range(frigates):
 			self.effectors.append(newBoat(self.arena))
 		for i in range(artillery):
-			self.effectors.append(NewArtillery(self.arena))
+			self.effectors.append(newArtillery(self.arena))
 		for i in range(armoured):
-			self.effectors.append(NewArmoured(self.arena))
+			self.effectors.append(newArmoured(self.arena))
 		for i in range(infantry):
 			self.effectors.append(newInfantry(self.arena))
 		self.populateTargets(targets)
@@ -201,14 +201,14 @@ class ProblemGenerator():
 
 	def populateOpportunities(self):
 		"""
-		Engagements have a near 100% lethality.  "If I can see it, I can kill it."
+		Engagements have a near 100% lethality.  "If I can see it, I can kill it." - Mr. Brown
 		"""
 		self.opportunities = np.zeros((len(self.effectors), len(self.targets), len(JF.OpportunityFeatures)))
 		ENERGYRATE_NORMALIZATION = MIN_RANGE / self.arena[JF.ArenaFeatures.SCALE]
 		for i in range(0, len(self.effectors)):
 			for j in range(0, len(self.targets)):
 				self.opportunities[i][j][JF.OpportunityFeatures.SELECTABLE] = True
-				EucDistance = EuclideanDistance(self.effectors[i], self.targets[j])
+				EucDistance = euclideanDistance(self.effectors[i], self.targets[j])
 				travelDistance = EucDistance - self.effectors[i][JF.EffectorFeatures.EFFECTIVEDISTANCE]
 				if not self.effectors[i][JF.EffectorFeatures.STATIC]:
 					RTDistance = returnDistance(self.effectors[i], self.targets[j])
@@ -216,13 +216,13 @@ class ProblemGenerator():
 						self.opportunities[i][j][JF.OpportunityFeatures.TIMECOST] = 0
 						self.opportunities[i][j][JF.OpportunityFeatures.ENERGYCOST] = 0
 					elif (RTDistance > self.effectors[i][JF.EffectorFeatures.ENERGYLEFT] / (self.effectors[i][JF.EffectorFeatures.ENERGYRATE]) or
-						self.effectors[i][JF.EffectorFeatures.TIMELEFT] < RTDistance / (self.effectors[i][JF.EffectorFeatures.SPEED] * STANDARDIZED_TIME * MAX_SPEED)):
+						self.effectors[i][JF.EffectorFeatures.TIMELEFT] < RTDistance / (self.effectors[i][JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)):
 						self.opportunities[i][j][JF.OpportunityFeatures.SELECTABLE] = False
-						print(f"Effector: {i}, Target: {j}")
-						print(f"Dist: {RTDistance > self.effectors[i][JF.EffectorFeatures.ENERGYLEFT] / self.effectors[i][JF.EffectorFeatures.ENERGYRATE]} : {RTDistance} > {self.effectors[i][JF.EffectorFeatures.ENERGYLEFT]} / {self.effectors[i][JF.EffectorFeatures.ENERGYRATE]}")
-						print(f"Time: {self.effectors[i][JF.EffectorFeatures.TIMELEFT] < RTDistance / (self.effectors[i][JF.EffectorFeatures.SPEED] * STANDARDIZED_TIME * MAX_SPEED)} : {self.effectors[i][JF.EffectorFeatures.TIMELEFT]} < {RTDistance} / {self.effectors[i][JF.EffectorFeatures.SPEED] * STANDARDIZED_TIME * MAX_SPEED}")
+						# print(f"Effector: {i}, Target: {j}")
+						# print(f"Dist: {RTDistance > self.effectors[i][JF.EffectorFeatures.ENERGYLEFT] / self.effectors[i][JF.EffectorFeatures.ENERGYRATE]} : {RTDistance} > {self.effectors[i][JF.EffectorFeatures.ENERGYLEFT]} / {self.effectors[i][JF.EffectorFeatures.ENERGYRATE]}")
+						# print(f"Time: {self.effectors[i][JF.EffectorFeatures.TIMELEFT] < RTDistance / (self.effectors[i][JF.EffectorFeatures.SPEED] * STANDARDIZED_TIME * MAX_SPEED)} : {self.effectors[i][JF.EffectorFeatures.TIMELEFT]} < {RTDistance} / {self.effectors[i][JF.EffectorFeatures.SPEED] * STANDARDIZED_TIME * MAX_SPEED}")
 					else:
-						self.opportunities[i][j][JF.OpportunityFeatures.TIMECOST] = travelDistance / (self.effectors[i][JF.EffectorFeatures.SPEED] * STANDARDIZED_TIME * MAX_SPEED)
+						self.opportunities[i][j][JF.OpportunityFeatures.TIMECOST] = travelDistance / (self.effectors[i][JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)
 						self.opportunities[i][j][JF.OpportunityFeatures.ENERGYCOST] = travelDistance * self.effectors[i][JF.EffectorFeatures.ENERGYRATE] #Energy is related to fuel or essentially range
 				else:
 					self.opportunities[i][j][JF.OpportunityFeatures.TIMECOST] = 0
@@ -234,7 +234,7 @@ class ProblemGenerator():
 				else:
 					self.opportunities[i][j][JF.OpportunityFeatures.PSUCCESS] = 0
 
-def AllPlanes():
+def allPlanes():
 	arena = np.zeros(len(JF.ArenaFeatures))
 	arena[JF.ArenaFeatures.SCALE] = 500
 	arena[JF.ArenaFeatures.COASTLINE] = 0 * arena[JF.ArenaFeatures.SCALE]
@@ -245,7 +245,7 @@ def AllPlanes():
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, planes=planes)
 
-def BoatsBoatsBoats():
+def boatsBoatsBoats():
 	arena = np.zeros(len(JF.ArenaFeatures))
 	arena[JF.ArenaFeatures.SCALE] = 100
 	arena[JF.ArenaFeatures.COASTLINE] = 0.3 * arena[JF.ArenaFeatures.SCALE]
@@ -255,7 +255,7 @@ def BoatsBoatsBoats():
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, frigates=random.randint(9,13))
 
-def InfantryOnly():
+def infantryOnly():
 	arena = np.zeros(len(JF.ArenaFeatures))
 	arena[JF.ArenaFeatures.SCALE] = 10
 	arena[JF.ArenaFeatures.COASTLINE] = 0.01 * arena[JF.ArenaFeatures.SCALE]
@@ -265,7 +265,7 @@ def InfantryOnly():
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, infantry=random.randint(5,15))
 
-def CombatArms():
+def combatArms():
 	arena = np.zeros(len(JF.ArenaFeatures))
 	arena[JF.ArenaFeatures.SCALE] = 30
 	arena[JF.ArenaFeatures.COASTLINE] = 0.01 * arena[JF.ArenaFeatures.SCALE]
@@ -273,16 +273,17 @@ def CombatArms():
 	arena[JF.ArenaFeatures.TIMEHORIZON] = 4
 	rands = []
 	total = random.randint(9,13)
-	heapq.heappush(rands, random.randint(0,total))
-	heapq.heappush(rands, random.randint(0,total))
-	artillery = heapq.heappop(rands)
-	armoured = heapq.heappop(rands) - artillery
+	rands.append(random.randint(0,total))
+	rands.append(random.randint(0,total))
+	rands.sort()
+	artillery = rands[0]
+	armoured = rands[1] - artillery
 	infantry = total - (artillery + armoured)
-	targets = random.randint(10, 30)
+	targets = random.randint(40, 50)
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, artillery=artillery, armoured=armoured, infantry=infantry)
 
-def Tiny():
+def tiny():
 	arena = np.zeros(len(JF.ArenaFeatures))
 	arena[JF.ArenaFeatures.SCALE] = 50
 	arena[JF.ArenaFeatures.COASTLINE] = 0.01 * arena[JF.ArenaFeatures.SCALE]
