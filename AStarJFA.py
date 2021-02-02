@@ -80,13 +80,13 @@ def AStar(state):
             if not remaining_moves:
                 continue  # The minimum between the number of hits left on a target, and eligible effectors is zero.
             value = target[JF.TaskFeatures.VALUE]
-            top = np.argpartition(state['Opportunities'][:, i, JF.OpportunityFeatures.PSUCCESS], remaining_moves)[:remaining_moves] # select the top 'n' effectors.
+            top = np.argpartition(state['Opportunities'][:, i, JF.OpportunityFeatures.PSUCCESS], -remaining_moves)[-remaining_moves:] # select the top 'n' effectors.
             for effector in top: # Reduce the value as if both of those effectors could take the action.
                 remaining_reward += value * state['Opportunities'][effector, i, JF.OpportunityFeatures.PSUCCESS]
                 value *= (1 - state['Opportunities'][effector, i, JF.OpportunityFeatures.PSUCCESS])
         return remaining_reward # Return the remaining reward if all moves were possible.
 
-    node = Node(sum(state['Targets'][:,JF.TaskFeatures.VALUE]), None, state, 0)
+    node = Node(sum(state['Targets'][:, JF.TaskFeatures.VALUE]), None, state, 0)
     expansions = 0
     branchFactor = 0
     duplicate_states = 0
@@ -98,24 +98,22 @@ def AStar(state):
         if node in explored:
             continue
         expansions += 1
-        print(f"\rExpansions: {expansions}, Duplicates: {duplicate_states}", end = "")
+        print(f"\rExpansions: {expansions}, Duplicates: {duplicate_states}", end="")
         if hasattr(node, 'parent'):
             node.g = node.parent.g - node.reward
-        if node.terminal == True:
+        if node.terminal is True:
             return node.Solution(), node.g, expansions, branchFactor
         explored.append(node)
         state = node.state
-        for effector, target in np.stack(np.where(state['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE] == True), axis = 1):
+        for effector, target in np.stack(np.where(state['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE] == True), axis=1):
             action = (effector, target)
             new_state, reward, terminal = env.update_state(action, copy.deepcopy(state))
             g = node.g - reward # The remaining value after the action taken
             h = heuristic(new_state) # The possible remaining value assuming that all of the best actions can be taken
-            child = Node(g + h, action, new_state, reward, terminal)
+            child = Node(g - h, action, new_state, reward, terminal)
             child.Parent(node)
             branchFactor += 1
-            #print(f"checking action: {action}")
             if child not in explored and child not in frontier:
-                #print(f"state not found.  g: {g} reward: {reward} prev action {node.action}")
                 heapq.heappush(frontier, child)
             elif child in frontier and child.g < frontier[frontier.index(child)].g:
                 # This shouldn't ever happen.  If we end up in the same state, then we should have the same reward.  must be a floating point bug.
@@ -134,6 +132,6 @@ if __name__ == '__main__':
     #Sim.printState(Sim.MergeState(env.effectorData, env.taskData, env.opportunityData))
     rewards_available = sum(state['Targets'][:,JF.TaskFeatures.VALUE])
     solution, g, expansions, branchFactor = AStar(state)
-    Sim.printState(Sim.MergeState(env.effectorData, env.taskData, env.opportunityData))
+    Sim.printState(Sim.mergeState(env.effectorData, env.taskData, env.opportunityData))
     end_time = time.time()
     print(f"Elapsed: {end_time - start_time}, Expansions: {expansions}, branchFactor: {branchFactor}, Reward: {g} / {rewards_available}, Steps: {solution}")
