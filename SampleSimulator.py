@@ -149,6 +149,12 @@ class Simulation:
 		# Effector 3 first hits target 1
 		return self.schedule
 
+	def getState(self):
+		"""
+		Returns a numpy-formatted version of the current problem state for DBA use
+		"""
+		return(self.formatState(self.effectorData, self.taskData, self.opportunityData))
+
 	def update(self, action):
 		"""
 		Take an action from an agent and apply that action to the effector specified.
