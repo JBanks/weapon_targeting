@@ -43,7 +43,7 @@ def newEffector(Arena, x_range, y_range, static, speed, range, time, effective_d
 	effector[JF.EffectorFeatures.TIMELEFT] = TimeFactor / STANDARDIZED_TIME
 	effector[JF.EffectorFeatures.EFFECTIVEDISTANCE] = effective_distance / STANDARDIZED_SCALE
 	effector[JF.EffectorFeatures.AMMORATE] = 1 / ammo
-	effector[JF.EffectorFeatures.ENERGYRATE] = 1 / MAX_RANGE
+	effector[JF.EffectorFeatures.ENERGYRATE] = 1 / MAX_RANGE # Remove
 	return effector
 
 def newPlane(Arena):
@@ -136,11 +136,14 @@ def newInfantry(Arena):
 	ammo = 2
 	return newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo)
 
-def newTarget(Arena):
+def newTarget(Arena, value=None):
 	target = np.zeros(len(JF.TaskFeatures))
 	target[JF.TaskFeatures.XPOS] = random.uniform(Arena[JF.ArenaFeatures.FRONTLINE], Arena[JF.ArenaFeatures.SCALE]) / STANDARDIZED_SCALE
 	target[JF.TaskFeatures.YPOS] = random.uniform(0, Arena[JF.ArenaFeatures.FRONTAGE]) / STANDARDIZED_SCALE
-	target[JF.TaskFeatures.VALUE] = random.uniform(0.35, 0.65)
+	if value is None:
+		target[JF.TaskFeatures.VALUE] = random.uniform(0.35, 0.65)
+	else:
+		target[JF.TaskFeatures.VALUE] = value
 	target[JF.TaskFeatures.SELECTED] = 0
 	return target
 
@@ -267,19 +270,19 @@ def infantryOnly():
 
 def combatArms():
 	arena = np.zeros(len(JF.ArenaFeatures))
-	arena[JF.ArenaFeatures.SCALE] = 30
+	arena[JF.ArenaFeatures.SCALE] = 40
 	arena[JF.ArenaFeatures.COASTLINE] = 0.01 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.FRONTLINE] = 0.4 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.TIMEHORIZON] = 4
 	rands = []
-	total = random.randint(9,13)
+	total = random.randint(7,9)
 	rands.append(random.randint(0,total))
 	rands.append(random.randint(0,total))
 	rands.sort()
 	artillery = rands[0]
 	armoured = rands[1] - artillery
 	infantry = total - (artillery + armoured)
-	targets = random.randint(40, 50)
+	targets = random.randint(12, 14)
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, artillery=artillery, armoured=armoured, infantry=infantry)
 
@@ -295,6 +298,61 @@ def tiny():
 	frigates = 1
 	planes = 1
 	infantry = 1
-	targets = 2
+	targets = 4
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, infantry=infantry, armoured=armoured, artillery=artillery)
+
+
+def toy():
+	"""
+	This generates a problem where the best solution is to not choose the items with the highest returns.
+	We use a 9, 40, 41 triangle to get distances where the effector must choose between a pair of targets at the same location,
+	or a single target at another location.
+	"""
+	arena = np.zeros(len(JF.ArenaFeatures))
+	arena[JF.ArenaFeatures.SCALE] = 40
+	arena[JF.ArenaFeatures.COASTLINE] = 0.00 * arena[JF.ArenaFeatures.SCALE]
+	arena[JF.ArenaFeatures.FRONTLINE] = 0.5 * arena[JF.ArenaFeatures.SCALE]
+	arena[JF.ArenaFeatures.FRONTAGE] = 0.5 * arena[JF.ArenaFeatures.SCALE]
+	arena[JF.ArenaFeatures.TIMEHORIZON] = 8
+	effector_x_range = (0.0, 0.0)
+	high_y_range = (9.0, 9.0)
+	effectors = []
+	targets = []
+	effectors.append(newEffector(arena, x_range=effector_x_range, y_range=(0, 0), static=False, speed=20, range=85, time=8, effective_distance=0.1, ammo=4))
+	effectors.append(newEffector(arena, x_range=effector_x_range, y_range=high_y_range, static=False, speed=20, range=85, time=8, effective_distance=0.1, ammo=4))
+	target = np.zeros(len(JF.TaskFeatures))
+	target[JF.TaskFeatures.XPOS] = 40 / STANDARDIZED_SCALE
+	target[JF.TaskFeatures.YPOS] = 9 / STANDARDIZED_SCALE
+	target[JF.TaskFeatures.VALUE] = 0.6
+	target[JF.TaskFeatures.SELECTED] = 0
+	targets.append(target)
+	target_x_range = (40, 40)
+	target = np.zeros(len(JF.TaskFeatures))
+	target[JF.TaskFeatures.XPOS] = 40 / STANDARDIZED_SCALE
+	target[JF.TaskFeatures.YPOS] = 0
+	target[JF.TaskFeatures.VALUE] = 0.5
+	target[JF.TaskFeatures.SELECTED] = 0
+	targets.append(target)
+	targets.append(target)
+	psuccess = np.asarray([
+		[0.6, 0.5, 0.5],
+		[0.5, 0.3, 0.3]
+	])
+	opportunities = np.zeros((len(effectors), len(targets), len(JF.OpportunityFeatures)))
+	ENERGYRATE_NORMALIZATION = MIN_RANGE / arena[JF.ArenaFeatures.SCALE]
+	for i in range(0, len(effectors)):
+		for j in range(0, len(targets)):
+			opportunities[i][j][JF.OpportunityFeatures.SELECTABLE] = True
+			EucDistance = euclideanDistance(effectors[i], targets[j])
+			travelDistance = EucDistance - effectors[i][JF.EffectorFeatures.EFFECTIVEDISTANCE]
+			RTDistance = returnDistance(effectors[i], targets[j])
+			opportunities[i][j][JF.OpportunityFeatures.TIMECOST] = travelDistance / (effectors[i][JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)
+			opportunities[i][j][JF.OpportunityFeatures.ENERGYCOST] = travelDistance * effectors[i][JF.EffectorFeatures.ENERGYRATE] #Energy is related to fuel or essentially range
+			opportunities[i][j][JF.OpportunityFeatures.PSUCCESS] = psuccess[i][j]
+	problem = {}
+	problem['Arena'] = arena
+	problem['Effectors'] = effectors
+	problem['Targets'] = targets
+	problem['Opportunities'] = opportunities
+	return problem
