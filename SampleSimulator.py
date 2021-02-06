@@ -47,7 +47,8 @@ def printState(state):
 	print("\n\nAction\t\tPSucc\tEnergy\ttime\tSelectable\tEucDistance\tReturnDist")
 	for i in range(nbEffector):
 		for j in range(nbTask):
-			print(f"({i:2},{j:2}):\t{state[i, j, pad + JF.OpportunityFeatures.PSUCCESS]:.4}\t{state[i, j, pad + JF.OpportunityFeatures.ENERGYCOST]:.4f}\t{state[i, j, pad + JF.OpportunityFeatures.TIMECOST]:.4f}\t{trueFalseStrings[int(state[i, j, pad + JF.OpportunityFeatures.SELECTABLE])]}\t\t{euclideanDistance(state[i, 0, :], state[0, j, len(JF.EffectorFeatures):]):.6f}\t{returnDistance(state[i, 0, :], state[0, j, len(JF.EffectorFeatures):]):.6f}")
+			if state[i, j, pad + JF.OpportunityFeatures.SELECTABLE]:
+				print(f"({i:2},{j:2}):\t{state[i, j, pad + JF.OpportunityFeatures.PSUCCESS]:.4}\t{state[i, j, pad + JF.OpportunityFeatures.ENERGYCOST]:.4f}\t{state[i, j, pad + JF.OpportunityFeatures.TIMECOST]:.4f}\t{trueFalseStrings[int(state[i, j, pad + JF.OpportunityFeatures.SELECTABLE])]}\t\t{euclideanDistance(state[i, 0, :], state[0, j, len(JF.EffectorFeatures):]):.6f}\t{returnDistance(state[i, 0, :], state[0, j, len(JF.EffectorFeatures):]):.6f}")
 
 
 class JeremyAgent():
@@ -367,13 +368,19 @@ def unMergeState(state):
 	return effectorData, taskData, opportunityData
 
 def loadProblem(filename):
+	problem = {}
 	with open(filename, 'r') as file:
-		problem = json.load(file)
+		fromFile = json.load(file)
+	for key in fromFile.keys():
+		problem[key] = np.asarray(fromFile[key])
 	return problem
 
 def saveProblem(problem, filename):
+	toFile = {}
+	for key in problem.keys():
+		toFile[key] = problem[key].tolist()
 	with open(filename, 'w') as file:
-		json.dump(problem, file)
+		json.dump(toFile, file)
 
 def main():
 	jeremy = 0
@@ -384,18 +391,20 @@ def main():
 	problemGenerators = [PG.allPlanes, PG.infantryOnly, PG.combatArms, PG.boatsBoatsBoats]
 	problemGenerator = random.choice(problemGenerators)
 
-	problemGenerator = PG.tiny
+	problemGenerator = PG.toy
 
 	env = Simulation(mergeState, keepstack=True)
 	agent = agents[agentSelection]
-	simProblem = problemGenerator()
+	simProblem =  problemGenerator()
 	state = env.reset(simProblem) #get initial state or load a new problem
+	total_reward = 0
 	while True:
 		terminal = False
 		while not terminal:
 			action = agent.getAction(state)
 			try:
 				new_state, reward, terminal =  env.update(action)
+				total_reward += reward
 			except Exception as e:
 				print(f"Error: {e}")
 				print(f"Action: {action}")
@@ -405,6 +414,7 @@ def main():
 			print(f"reward returned: {reward}")
 		printState(state)
 		print(f"schedule: {env.getSchedule()}")
+		print(f"Reward Returned: {total_reward}")
 		state = env.reset()
 
 if __name__ == "__main__":
