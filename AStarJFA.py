@@ -8,13 +8,12 @@ import numpy as np
 import copy
 import time
 
-"""
-This node class is used to simplify storage and comparisson between different
-states that are reached by the search algorithm.
-"""
-
 
 class Node:
+    """
+    This node class is used to simplify storage and comparisson between different
+    states that are reached by the search algorithm.
+    """
     def __init__(self, g, action, state, reward, terminal=False):
         self.g = g
         self.action = action
@@ -79,15 +78,13 @@ def astar_heuristic(state):
         if not remaining_moves:
             continue  # The minimum between the number of hits left on a target, and eligible effectors is zero.
         value = target[JF.TaskFeatures.VALUE]
-        top = np.argpartition(state['Opportunities'][:, i, JF.OpportunityFeatures.PSUCCESS], -remaining_moves)[
-              -remaining_moves:]  # select the top 'n' effectors.
+        top = np.argpartition(state['Opportunities'][:, i, JF.OpportunityFeatures.PSUCCESS], -1)[
+               -1:]  # select the top 'n' effectors.
         for move in range(remaining_moves):
             reward = value * state['Opportunities'][top[0], i, JF.OpportunityFeatures.PSUCCESS]
             remaining_reward += reward
             value -= reward
     return remaining_reward  # Return the remaining reward if all moves were possible.
-
-
 
 
 def AStar(state, heuristic=astar_heuristic):
@@ -130,9 +127,9 @@ def AStar(state, heuristic=astar_heuristic):
             h = heuristic(new_state)  # The possible remaining value assuming that all of the best actions can be taken
             child = Node(g - h, action, new_state, reward, terminal)
             child.Parent(node)
-            branchFactor += 1
             if child not in explored and child not in frontier:
                 heapq.heappush(frontier, child)
+                branchFactor += 1
                 # print(f"push {child.g} <- ({g}-{h}), action: {action}")
             # elif child in frontier and child.g < frontier[frontier.index(child)].g:
             #    # This shouldn't ever happen.  If we end up in the same state, then we should have the same reward.  must be a floating point bug.
@@ -149,7 +146,7 @@ def ucs_heuristic(state):
 
 if __name__ == '__main__':
     env = Sim.Simulation(Sim.state_to_dict)
-    simProblem = PG.combatArms()
+    simProblem = PG.toy()
     state = env.reset(simProblem)  # get initial state or load a new problem
     print(f"Problem size: {(len(state['Effectors']), len(state['Targets']))}")
     # Sim.printState(Sim.MergeState(env.effectorData, env.taskData, env.opportunityData))
