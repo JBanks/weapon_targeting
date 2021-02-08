@@ -244,7 +244,7 @@ def network_validation(nb_effectors=7, nb_targets=16):
 	arena[JF.ArenaFeatures.FRONTLINE] = 0.5 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.TIMEHORIZON] = 4
 	rands = []
-	total = nb_targets
+	total = nb_effectors
 	rands.append(random.randint(0,total))
 	rands.append(random.randint(0,total))
 	rands.sort()
