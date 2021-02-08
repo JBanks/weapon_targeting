@@ -237,6 +237,23 @@ class ProblemGenerator():
 				else:
 					self.opportunities[i][j][JF.OpportunityFeatures.PSUCCESS] = 0
 
+def network_validation(nb_effectors=7, nb_targets=16):
+	arena = np.zeros(len(JF.ArenaFeatures))
+	arena[JF.ArenaFeatures.SCALE] = 50
+	arena[JF.ArenaFeatures.COASTLINE] = 0.1 * arena[JF.ArenaFeatures.SCALE]
+	arena[JF.ArenaFeatures.FRONTLINE] = 0.5 * arena[JF.ArenaFeatures.SCALE]
+	arena[JF.ArenaFeatures.TIMEHORIZON] = 4
+	rands = []
+	total = nb_targets
+	rands.append(random.randint(0,total))
+	rands.append(random.randint(0,total))
+	rands.sort()
+	artillery = rands[0]
+	armoured = rands[1] - artillery
+	infantry = total - (artillery + armoured)
+	PG = ProblemGenerator()
+	return PG.newProblem(arena, targets=nb_targets, planes=planes)
+
 def allPlanes():
 	arena = np.zeros(len(JF.ArenaFeatures))
 	arena[JF.ArenaFeatures.SCALE] = 500
@@ -275,14 +292,14 @@ def combatArms():
 	arena[JF.ArenaFeatures.FRONTLINE] = 0.4 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.TIMEHORIZON] = 4
 	rands = []
-	total = random.randint(7,9)
+	total = random.randint(6,8)
 	rands.append(random.randint(0,total))
 	rands.append(random.randint(0,total))
 	rands.sort()
 	artillery = rands[0]
 	armoured = rands[1] - artillery
 	infantry = total - (artillery + armoured)
-	targets = random.randint(12, 14)
+	targets = random.randint(20, 30)
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, artillery=artillery, armoured=armoured, infantry=infantry)
 
