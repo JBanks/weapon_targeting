@@ -252,7 +252,7 @@ def network_validation(nb_effectors=7, nb_targets=16):
 	armoured = rands[1] - artillery
 	infantry = total - (artillery + armoured)
 	PG = ProblemGenerator()
-	return PG.newProblem(arena, targets=nb_targets, planes=planes)
+	return PG.newProblem(arena, targets=nb_targets, artillery=artillery, armoured=armoured, infantry=infantry)
 
 def allPlanes():
 	arena = np.zeros(len(JF.ArenaFeatures))
