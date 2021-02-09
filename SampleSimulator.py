@@ -2,8 +2,8 @@
 
 from enum import IntEnum, auto
 import numpy as np
-import ProblemGenerators as PG
-import JFAFeatures as JF
+from . import ProblemGenerators as PG
+from . import JFAFeatures as JF
 import random
 import json
 import math
@@ -352,7 +352,8 @@ def mergeState(effectorData, taskData, opportunityData):
 	effectors += effectorData
 	tasks += taskData
 	effectors = effectors.transpose([1,0,2]) #Transpose from m.n.p to n.m.p
-	return np.concatenate((effectors, tasks, opportunityData), axis=2) #concatenate on the 3rd axis
+	# concatenate on the last axis, and then make the feature axis the first one
+	return (np.concatenate((effectors, tasks, opportunityData), axis=2)).transpose(2,0,1)
 
 def state_to_dict(effectorData, taskData, opportunityData):
 	state = {}
