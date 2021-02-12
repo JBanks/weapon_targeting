@@ -23,7 +23,7 @@ def loadProblem(filename):
 def saveProblem(problem, filename):
 	toFile = {}
 	for key in problem.keys():
-		toFile[key] = problem[key].tolist()
+		toFile[key] = np.asarray(problem[key]).tolist()
 	with open(filename, 'w') as file:
 		json.dump(toFile, file)
 
@@ -191,11 +191,6 @@ class ProblemGenerator():
 		problem['Targets'] = self.targets
 		problem['Opportunities'] = self.opportunities
 		return problem
-
-	def saveProblem(filename):
-		problem = self.formatProblem()
-		with open(filename, 'w') as file:
-			json.dump(problem, file)
 
 	def populateTargets(self, qty):
 		self.targets = []
