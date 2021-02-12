@@ -7,6 +7,7 @@ import JFAFeatures as JF
 import random
 import json
 import math
+import sys
 
 SPEED_CORRECTION = PG.STANDARDIZED_TIME * PG.MAX_SPEED
 
@@ -368,19 +369,10 @@ def unMergeState(state):
 	return effectorData, taskData, opportunityData
 
 def loadProblem(filename):
-	problem = {}
-	with open(filename, 'r') as file:
-		fromFile = json.load(file)
-	for key in fromFile.keys():
-		problem[key] = np.asarray(fromFile[key])
-	return problem
+	return PG.loadProblem(filename)
 
 def saveProblem(problem, filename):
-	toFile = {}
-	for key in problem.keys():
-		toFile[key] = problem[key].tolist()
-	with open(filename, 'w') as file:
-		json.dump(toFile, file)
+	PG.saveProblem(problem, filename)
 
 def main():
 	jeremy = 0
@@ -388,14 +380,17 @@ def main():
 	agents = [JeremyAgent, AlexAgent]
 	agentSelection = 0
 
-	problemGenerators = [PG.allPlanes, PG.infantryOnly, PG.combatArms, PG.boatsBoatsBoats]
-	problemGenerator = random.choice(problemGenerators)
-
-	problemGenerator = PG.toy
-
 	env = Simulation(mergeState, keepstack=True)
+	if len(sys.argv) > 1:
+		simProblem = PG.loadProblem(sys.argv[1])
+	else:
+		problemGenerators = [PG.allPlanes, PG.infantryOnly, PG.combatArms, PG.boatsBoatsBoats]
+		problemGenerator = random.choice(problemGenerators)
+
+		problemGenerator = PG.toy
+		simProblem =  problemGenerator()
+
 	agent = agents[agentSelection]
-	simProblem =  problemGenerator()
 	state = env.reset(simProblem) #get initial state or load a new problem
 	total_reward = 0
 	while True:
