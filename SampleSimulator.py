@@ -213,9 +213,9 @@ class Simulation:
 				travelDistance = max(0, EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE])
 				if (RTDistance > effector[JF.EffectorFeatures.ENERGYLEFT] / (effector[JF.EffectorFeatures.ENERGYRATE]) or
 					effector[JF.EffectorFeatures.TIMELEFT] < RTDistance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)):
-					print(f"Effector: {effectorIndex}, Target: {i}")
-					print(f"Dist: {RTDistance > effector[JF.EffectorFeatures.ENERGYLEFT] / effector[JF.EffectorFeatures.ENERGYRATE]} : {RTDistance} > {effector[JF.EffectorFeatures.ENERGYLEFT]} / {effector[JF.EffectorFeatures.ENERGYRATE]}")
-					print(f"Time: {effector[JF.EffectorFeatures.TIMELEFT] < RTDistance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)} : {effector[JF.EffectorFeatures.TIMELEFT]} < {RTDistance} / {effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION}")
+					#print(f"Effector: {effectorIndex}, Target: {i}")
+					#print(f"Dist: {RTDistance > effector[JF.EffectorFeatures.ENERGYLEFT] / effector[JF.EffectorFeatures.ENERGYRATE]} : {RTDistance} > {effector[JF.EffectorFeatures.ENERGYLEFT]} / {effector[JF.EffectorFeatures.ENERGYRATE]}")
+					#print(f"Time: {effector[JF.EffectorFeatures.TIMELEFT] < RTDistance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)} : {effector[JF.EffectorFeatures.TIMELEFT]} < {RTDistance} / {effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION}")
 					self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
 				else:
 					self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = travelDistance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION) #+ effector[JF.EffectorFeatures.DUTYCYCLE]
