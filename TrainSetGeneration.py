@@ -13,6 +13,9 @@ import sys
 import re
 import os
 
+def log(string):
+    print(f"[{time.asctime()}] {string}")
+
 def find_TSP(problem, max_single=4):
     """
     If there are at least 5 targets where only 1 effector can act on those targets
@@ -74,11 +77,11 @@ if __name__ == '__main__':
             state = env.reset(simProblem)  # get initial state or load a new problem
             rewards_available = sum(state['Targets'][:, JF.TaskFeatures.VALUE])
             selectable_opportunities = np.sum(state['Opportunities'][:,:,JF.OpportunityFeatures.SELECTABLE])
-            print(f"Scenario {filename[:-5]} with {selectable_opportunities} selectable opportunities")
+            log(f"Scenario {filename[:-5]} with {selectable_opportunities} selectable opportunities")
             solution, g, expansions, branchFactor = AS.AStar(state, enviro = env)
             csv_content.append([filename, g, rewards_available, solution])
             end_time = time.time()
-            print(f"AStar solved {filename} in: {end_time - start_time:.6f}s")
+            log(f"AStar solved {filename} in: {end_time - start_time:.6f}s")
         except KeyboardInterrupt:
             input("Press Enter to attempt again, or ctrl+c to quit.")
     print()
@@ -87,4 +90,4 @@ if __name__ == '__main__':
     with open(csvfilename, 'w') as f:
         writer = csv.writer(f)
         writer.writerows(csv_content)
-    print(f"solutions exported to {csvfilename}")
+    log(f"solutions exported to {csvfilename}")
