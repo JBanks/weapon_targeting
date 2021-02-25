@@ -66,9 +66,9 @@ if __name__ == '__main__':
             start_time = time.time()
             filename = uuid_url64() + ".json"
             simProblem = PG.network_validation(effectors, targets)
-            while find_TSP(simProblem):
-                print("Travelling Salesman Problem found.  We cannot validate this with AStar, so we are generating a new problem.")
-                simProblem = PG.network_validation(effectors, targets)
+            #while find_TSP(simProblem):
+            #    print("Travelling Salesman Problem found.  We cannot validate this with AStar, so we are generating a new problem.")
+            #    simProblem = PG.network_validation(effectors, targets)
             Sim.saveProblem(simProblem, os.path.join(directory, filename))
 
             state = env.reset(simProblem)  # get initial state or load a new problem
@@ -83,6 +83,8 @@ if __name__ == '__main__':
             input("Press Enter to attempt again, or ctrl+c to quit.")
     print()
 
-    #with open(os.path.join(directory, f'{time.time()}.csv'), 'wb') as f:
-    #    writer = csv.writer(f)
-    #    writer.writerows(csv_content)
+    csvfilename = os.path.join(directory, f'{time.time()}.csv')
+    with open(csvfilename, 'w') as f:
+        writer = csv.writer(f)
+        writer.writerows(csv_content)
+    print(f"solutions exported to {csvfilename}")
