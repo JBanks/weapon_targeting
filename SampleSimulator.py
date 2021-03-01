@@ -52,6 +52,42 @@ def printState(state):
 				print(f"({i:2},{j:2}):\t{state[i, j, pad + JF.OpportunityFeatures.PSUCCESS]:.4}\t{state[i, j, pad + JF.OpportunityFeatures.ENERGYCOST]:.4f}\t{state[i, j, pad + JF.OpportunityFeatures.TIMECOST]:.4f}\t{trueFalseStrings[int(state[i, j, pad + JF.OpportunityFeatures.SELECTABLE])]}\t\t{euclideanDistance(state[i, 0, :], state[0, j, len(JF.EffectorFeatures):]):.6f}\t{returnDistance(state[i, 0, :], state[0, j, len(JF.EffectorFeatures):]):.6f}")
 
 
+def printGrid(state):
+	trueFalseStrings = ["False", "True"]
+	nbEffector = len(state[:,0,0])
+	nbTask = len(state[0,:,0])
+	pad = len(JF.EffectorFeatures) + len(JF.TaskFeatures)
+	print("\t",end="")
+	for i in range(nbEffector):
+		print(f"{i}\t\t", end="")
+	print()
+	for j in range(nbTask):
+		print(f"{j}\t", end="")
+		for i in range(nbEffector):
+			if state[i, j, pad + JF.OpportunityFeatures.SELECTABLE]:
+				print(f"{state[i, j, pad + JF.OpportunityFeatures.PSUCCESS]:.8f}\t",end="")
+			else:
+				print("-"*8,end="")
+		print()
+		print(f"{state[0,j,len(JF.EffectorFeatures) + JF.TaskFeatures.VALUE]:.3f}", end="")
+		print("\t", end="")
+		for i in range(nbEffector):
+			if state[i, j, pad + JF.OpportunityFeatures.SELECTABLE]:
+				print(f"{state[i, j, pad + JF.OpportunityFeatures.ENERGYCOST]:.8f}\t",end="")
+			else:
+				print("-"*8,end="")
+		print()
+		print(f"{state[0,j,len(JF.EffectorFeatures) + JF.TaskFeatures.SELECTED]:.1f}", end="")
+		print("\t", end="")
+		for i in range(nbEffector):
+			if state[i, j, pad + JF.OpportunityFeatures.SELECTABLE]:
+				print(f"{state[i, j, pad + JF.OpportunityFeatures.TIMECOST]:.8f}\t",end="")
+			else:
+				print("-"*8,end="")
+		print("\n")
+
+
+
 class JeremyAgent():
 	def getAction(state):
 		"""
