@@ -237,6 +237,7 @@ def network_validation(nb_effectors=7, nb_targets=16):
 	arena[JF.ArenaFeatures.SCALE] = 50
 	arena[JF.ArenaFeatures.COASTLINE] = 0.1 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.FRONTLINE] = 0.5 * arena[JF.ArenaFeatures.SCALE]
+	arena[JF.ArenaFeatures.FRONTAGE] = 0.4 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.TIMEHORIZON] = 4
 	rands = []
 	total = nb_effectors
@@ -254,6 +255,7 @@ def allPlanes():
 	arena[JF.ArenaFeatures.SCALE] = 500
 	arena[JF.ArenaFeatures.COASTLINE] = 0 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.FRONTLINE] = 0.2 * arena[JF.ArenaFeatures.SCALE]
+	arena[JF.ArenaFeatures.FRONTAGE] = 0.4 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.TIMEHORIZON] = 4
 	planes = random.randint(9,13)
 	targets = random.randint(10, 50)
@@ -265,6 +267,7 @@ def boatsBoatsBoats():
 	arena[JF.ArenaFeatures.SCALE] = 100
 	arena[JF.ArenaFeatures.COASTLINE] = 0.3 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.FRONTLINE] = 0.301 * arena[JF.ArenaFeatures.SCALE]
+	arena[JF.ArenaFeatures.FRONTAGE] = 0.4 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.TIMEHORIZON] = 4
 	targets = random.randint(10, 50)
 	PG = ProblemGenerator()
@@ -275,6 +278,7 @@ def infantryOnly():
 	arena[JF.ArenaFeatures.SCALE] = 10
 	arena[JF.ArenaFeatures.COASTLINE] = 0.01 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.FRONTLINE] = 0.4 * arena[JF.ArenaFeatures.SCALE]
+	arena[JF.ArenaFeatures.FRONTAGE] = 0.4 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.TIMEHORIZON] = 8
 	targets = random.randint(4, 9)
 	PG = ProblemGenerator()
@@ -285,6 +289,7 @@ def combatArms():
 	arena[JF.ArenaFeatures.SCALE] = 40
 	arena[JF.ArenaFeatures.COASTLINE] = 0.01 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.FRONTLINE] = 0.4 * arena[JF.ArenaFeatures.SCALE]
+	arena[JF.ArenaFeatures.FRONTAGE] = 0.4 * arena[JF.ArenaFeatures.SCALE]
 	arena[JF.ArenaFeatures.TIMEHORIZON] = 4
 	rands = []
 	total = random.randint(6,8)
