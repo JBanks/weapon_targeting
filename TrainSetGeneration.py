@@ -52,11 +52,15 @@ if __name__ == '__main__':
     effectors = 4
     targets = 8
     quantity = 100
+    solve_problems = True
     if len(sys.argv) > 2:
         effectors = int(sys.argv[1])
         targets = int(sys.argv[2])
         if len(sys.argv) > 3:
             quantity = int(sys.argv[3])
+            if len(sys.argv) > 4:
+                if int(sys.argv[4]) == 0:
+                    solve_problems = False
     directory = f"{effectors}x{targets}"
     try:
         os.mkdir(directory)
@@ -78,16 +82,18 @@ if __name__ == '__main__':
             rewards_available = sum(state['Targets'][:, JF.TaskFeatures.VALUE])
             selectable_opportunities = np.sum(state['Opportunities'][:,:,JF.OpportunityFeatures.SELECTABLE])
             log(f"Scenario {filename[:-5]} with {selectable_opportunities} selectable opportunities")
-            solution, g, expansions, branchFactor = AS.AStar(state, enviro = env)
-            csv_content.append([filename, g, rewards_available, solution])
-            end_time = time.time()
-            log(f"AStar solved {filename} in: {end_time - start_time:.6f}s")
+            if solve_problems:
+                solution, g, expansions, branchFactor = AS.AStar(state, enviro = env)
+                csv_content.append([filename, g, rewards_available, solution])
+                end_time = time.time()
+                log(f"AStar solved {filename} in: {end_time - start_time:.6f}s")
         except KeyboardInterrupt:
             input("Press Enter to attempt again, or ctrl+c to quit.")
     print()
 
-    csvfilename = os.path.join(directory, f'{time.time()}.csv')
-    with open(csvfilename, 'w') as f:
-        writer = csv.writer(f)
-        writer.writerows(csv_content)
-    log(f"solutions exported to {csvfilename}")
+    if solve_problems:
+        csvfilename = os.path.join(directory, f'{time.time()}.csv')
+        with open(csvfilename, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerows(csv_content)
+        log(f"solutions exported to {csvfilename}")
