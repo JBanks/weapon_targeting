@@ -73,6 +73,8 @@ if __name__ == '__main__':
             start_time = time.time()
             filename = uuid_url64() + ".json"
             simProblem = PG.network_validation(effectors, targets)
+            while (np.sum(state['Opportunities'][:,:,JF.OpportunityFeatures.SELECTABLE]) < 1):
+                simProblem = PG.network_validation(effectors, targets)
             #while find_TSP(simProblem):
             #    print("Travelling Salesman Problem found.  We cannot validate this with AStar, so we are generating a new problem.")
             #    simProblem = PG.network_validation(effectors, targets)
