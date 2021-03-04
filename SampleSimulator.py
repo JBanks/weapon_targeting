@@ -434,7 +434,7 @@ def main():
 		while not terminal:
 			action = agent.getAction(state)
 			try:
-				new_state, reward, terminal =  env.update(action)
+				new_state, reward, terminal = env.update(action)
 				total_reward += reward
 			except Exception as e:
 				print(f"Error: {e}")

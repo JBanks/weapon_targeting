@@ -155,12 +155,12 @@ def astar_heuristic(node):
     return remaining_reward  # Return the remaining reward if all moves were possible.
 
 
-def AStar(state, heuristic=astar_heuristic, enviro=None, track_progress=False):
+def AStar(problem, heuristic=astar_heuristic, track_progress=False):
     """
     This is an A* implementation to search for a solution to a given JFA problem.
     """
-    if enviro == None:
-        enviro = env
+    env = Sim.Simulation(Sim.state_to_dict)
+    state = env.reset(problem)  # get initial state or load a new problem
     node = Node(sum(state['Targets'][:, JF.TaskFeatures.VALUE]), None, state, 0)
     expansions = 0
     branchFactor = 0
@@ -193,7 +193,7 @@ def AStar(state, heuristic=astar_heuristic, enviro=None, track_progress=False):
         for effector, target in np.stack(
                 np.where(state['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE] == True), axis=1):
             action = (effector, target)
-            new_state, reward, terminal = enviro.update_state(action, copy.deepcopy(state))
+            new_state, reward, terminal = env.update_state(action, copy.deepcopy(state))
             g = node.g - reward  # The remaining value after the action taken
             child = Node(g, action, new_state, reward, terminal)
             child.Parent(node)
@@ -217,26 +217,24 @@ def ucs_heuristic(state):
 
 
 if __name__ == '__main__':
-    env = Sim.Simulation(Sim.state_to_dict)
     if len(sys.argv) > 1:
         filename = sys.argv[1]
         simProblem = PG.loadProblem(filename)
     else:
         simProblem = PG.network_validation(4, 8)
-    state = env.reset(simProblem)  # get initial state or load a new problem
-    print(f"Problem size: {(len(state['Effectors']), len(state['Targets']))}")
-    Sim.printState(Sim.mergeState(env.effectorData, env.taskData, env.opportunityData))
-    rewards_available = sum(state['Targets'][:, JF.TaskFeatures.VALUE])
+    print(f"Problem size: {(len(simProblem['Effectors']), len(simProblem['Targets']))}")
+    Sim.printState(Sim.mergeState(simProblem['Effectors'], simProblem['Targets'], simProblem['Opportunities']))
+    rewards_available = sum(simProblem['Targets'][:, JF.TaskFeatures.VALUE])
     print("A-Star")
     astar_start_time = time.time()
-    solution, g, expansions, branchFactor = AStar(state, track_progress=True)
+    solution, g, expansions, branchFactor = AStar(simProblem, track_progress=True)
     astar_end_time = time.time()
     # print("\nUCS")
     # ucs_start_time = time.time()
     # ucs_solution, ucs_g, ucs_expansions, ucs_branchFactor = AStar(state, heuristic=ucs_heuristic)
     # ucs_end_time = time.time()
-    Sim.printState(Sim.mergeState(env.effectorData, env.taskData, env.opportunityData))
-    print(f"{(len(state['Effectors']), len(state['Targets']))}")
+    Sim.printState(Sim.mergeState(simProblem['Effectors'], simProblem['Targets'], simProblem['Opportunities']))
+    print(f"{(len(simProblem['Effectors']), len(simProblem['Targets']))}")
     print(
         f"AStar solved in: {astar_end_time - astar_start_time:.6f}s, Expansions: {expansions}, branchFactor: {branchFactor}, Reward left: {g} / {rewards_available}, Steps: {solution}")
     # print(
