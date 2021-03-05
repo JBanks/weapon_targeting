@@ -185,11 +185,10 @@ class ProblemGenerator():
 		return self.formatProblem()
 
 	def formatProblem(self):
-		problem = {}
-		problem['Arena'] = self.arena
-		problem['Effectors'] = self.effectors
-		problem['Targets'] = self.targets
-		problem['Opportunities'] = self.opportunities
+		problem = {'Arena': self.arena,
+			'Effectors': np.asarray(self.effectors),
+			'Targets': np.asarray(self.targets),
+			'Opportunities': np.asarray(self.opportunities)}
 		return problem
 
 	def populateTargets(self, qty):

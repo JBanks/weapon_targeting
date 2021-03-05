@@ -70,24 +70,22 @@ if __name__ == '__main__':
     csv_content = []
     for i in range(quantity):
         try:
-            start_time = time.time()
             filename = uuid_url64() + ".json"
             simProblem = PG.network_validation(effectors, targets)
             while (np.sum(simProblem['Opportunities'][:,:,JF.OpportunityFeatures.SELECTABLE]) < 1):
                 simProblem = PG.network_validation(effectors, targets)
-            #while find_TSP(simProblem):
-            #    print("Travelling Salesman Problem found.  We cannot validate this with AStar, so we are generating a new problem.")
-            #    simProblem = PG.network_validation(effectors, targets)
             Sim.saveProblem(simProblem, os.path.join(directory, filename))
 
-            state = env.reset(simProblem)  # get initial state or load a new problem
-            rewards_available = sum(state['Targets'][:, JF.TaskFeatures.VALUE])
-            selectable_opportunities = np.sum(state['Opportunities'][:,:,JF.OpportunityFeatures.SELECTABLE])
+            rewards_available = sum(simProblem['Targets'][:, JF.TaskFeatures.VALUE])
+            selectable_opportunities = np.sum(simProblem['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE])
             log(f"Scenario {filename[:-5]} with {selectable_opportunities} selectable opportunities")
             if solve_problems:
-                solution, g, expansions, branchFactor = AS.AStar(state, enviro = env)
-                csv_content.append([filename, g, rewards_available, solution])
+                start_time = time.time()
+                as_solution, as_g = AS.AStar(simProblem)
                 end_time = time.time()
+                greedy_solution, greedy_g = AS.greedy(simProblem)
+
+                csv_content.append([filename, as_g, greedy_g, rewards_available, as_solution])
                 log(f"AStar solved {filename} in: {end_time - start_time:.6f}s")
         except KeyboardInterrupt:
             input("Press Enter to attempt again, or ctrl+c to quit.")

@@ -62,68 +62,47 @@ class Node:
         return self.solution
 
 
-def best_first(state, cum_reward=0, sol=None):
+def greedy(problem):
+    env = Sim.Simulation(Sim.state_to_dict)
+    state = env.reset(problem)  # get initial state or load a new problem
+    pSuccesses = state['Opportunities'][:, :, JF.OpportunityFeatures.PSUCCESS]
+    values = state['Targets'][:, JF.TaskFeatures.VALUE]
+    total_reward = sum(values)
+    action = np.unravel_index(np.argmax(pSuccesses * values), pSuccesses.shape)
+
+    node = Node(sum(state['Targets'][:, JF.TaskFeatures.VALUE]), None, state, 0)
+    node = greedy_rec(node, env=env)
+
+    return node.Solution(), node.g
+
+def greedy_rec(node, env=None):
     """
     This gives a baseline of choosing the best option first.
     """
-    # This should provide the effector target pair with the largest return from PSuccess * Value
-    eff, tar = np.argmax(state['Opportunities'][:,:,JF.OpportunityFeatures.PSUCCESS] * state['Targets'][JF.TaskFeatures.VALUE])
-    state, reward, terminal = env.update_state((eff, tar), copy.deepcopy(state))
-    cum_reward += reward
-    sol += ", " + (eff, tar)
-    if not terminal:
-        once_sol, once_rew = best_first(state, cum_reward)
-        same_twice_reward = 0
-        if state['Targets'][tar][JF.TaskFeatures.SELECTED] < 1 and state['Effectors'][eff][JF.EffectorFeatures.AMMO] >= state['Effectors'][eff][JF.EffectorFeatures.AMMORATE]:
-            same_twice_state, same_twice_reward, same_twice_terminal = env.update_state(action, copy.deepcopy(state))
-            twice_sol, twice_rew = best_first(same_twice_state, cum_reward + same_twice_reward)
-            if twice_rew > once_rew:
-                return twice_sol + ", ", once_rew
-        return once_sol + ", ", twice_rew
-    return cum_reward
+    state = node.state
 
+    pSuccesses = state['Opportunities'][:, :, JF.OpportunityFeatures.PSUCCESS]
+    values = state['Targets'][:, JF.TaskFeatures.VALUE]
+    action = np.unravel_index(np.argmax(pSuccesses * values), pSuccesses.shape)
 
-    heapq.heappush(frontier, node)
-    while frontier:
-        node = heapq.heappop(frontier)
-        if node in explored:
-            continue
-        # print(f"pulled g: {node.g}, action: {node.action}")
-        expansions += 1
-        print(f"\rExpansions: {expansions}, Duplicates: {duplicate_states}", end="")
-        if hasattr(node, 'parent'):
-            if node.terminal is True:
-                print(f"\nTerminal node pulled: g = {node.g}")
-                if node.g == node.parent.g - node.reward:
-                    return node.Solution(), node.g, expansions, branchFactor
-                print(f"Sending node back to heap. g: {node.g} -> {node.parent.g - node.reward}")
-                node.g = node.parent.g - node.reward
-                heapq.heappush(frontier, node)
-                continue
-            node.g = node.parent.g - node.reward
-            ## This may actually not be the optimal.  There may be a more optimal node.
-            ## If the value is the same, we found it, if the value changes, put it back in the heap.
-        explored.append(node)
-        state = node.state
-        for effector, target in np.stack(
-                np.where(state['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE] == True), axis=1):
-            action = (effector, target)
-            new_state, reward, terminal = env.update_state(action, copy.deepcopy(state))
-            g = node.g - reward  # The remaining value after the action taken
-            h = heuristic(new_state)  # The possible remaining value assuming that all of the best actions can be taken
-            child = Node(g - h, action, new_state, reward, terminal)
-            child.Parent(node)
-            if child not in explored and child not in frontier:
-                heapq.heappush(frontier, child)
-                branchFactor += 1
-                # print(f"push {child.g} <- ({g}-{h}), action: {action}")
-            # elif child in frontier and child.g < frontier[frontier.index(child)].g:
-            #    # This shouldn't ever happen.  If we end up in the same state, then we should have the same reward.  must be a floating point bug.
-            #    print(f"state updated.  That's weird... g changed from {child.g} to {frontier[frontier.index(child)].g}")
-            #    heapq.heappush(frontier, child)
-            else:
-                duplicate_states += 1
-    return "failed", None, expansions, branchFactor
+    state, reward, terminal = env.update_state(action, copy.deepcopy(state))
+    if terminal:
+        child = Node(node.g - reward, action, state, reward, terminal)
+        child.Parent(node)
+        return child
+
+    twice = node
+    effector, target = action
+    if state['Targets'][target][JF.TaskFeatures.SELECTED] < 1 and state['Effectors'][effector][JF.EffectorFeatures.AMMOLEFT] >= state['Effectors'][effector][JF.EffectorFeatures.AMMORATE]:
+        twice = Node(node.g - reward, action, state, reward, terminal)
+        twice.Parent(node)
+        twice = greedy_rec(twice, env)
+
+    once = Node(node.g - reward, action, state, reward, terminal)
+    once.Parent(node)
+    once = greedy_rec(once, env)
+
+    return min(twice, once)
 
 
 def astar_heuristic(node):
@@ -180,7 +159,7 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=False):
             if node.terminal is True:
                 #print(f"\nTerminal node pulled: g = {node.g}")
                 if node.g == node.parent.g - node.reward:
-                    return node.Solution(), node.g, expansions, branchFactor
+                    return node.Solution(), node.g
                 #print(f"Sending node back to heap. g: {node.g} -> {node.parent.g - node.reward}")
                 node.g = node.parent.g - node.reward
                 heapq.heappush(frontier, node)
@@ -202,14 +181,9 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=False):
             if child not in explored and child not in frontier:
                 heapq.heappush(frontier, child)
                 branchFactor += 1
-                # print(f"push {child.g} <- ({g}-{h}), action: {action}")
-            # elif child in frontier and child.g < frontier[frontier.index(child)].g:
-            #    # This shouldn't ever happen.  If we end up in the same state, then we should have the same reward.  must be a floating point bug.
-            #    print(f"state updated.  That's weird... g changed from {child.g} to {frontier[frontier.index(child)].g}")
-            #    heapq.heappush(frontier, child)
             else:
                 duplicate_states += 1
-    return "failed", None, expansions, branchFactor
+    return "failed", None
 
 
 def ucs_heuristic(state):
@@ -217,6 +191,8 @@ def ucs_heuristic(state):
 
 
 if __name__ == '__main__':
+    solve_aStar = True
+    solve_greedy = True
     if len(sys.argv) > 1:
         filename = sys.argv[1]
         simProblem = PG.loadProblem(filename)
@@ -225,17 +201,16 @@ if __name__ == '__main__':
     print(f"Problem size: {(len(simProblem['Effectors']), len(simProblem['Targets']))}")
     Sim.printState(Sim.mergeState(simProblem['Effectors'], simProblem['Targets'], simProblem['Opportunities']))
     rewards_available = sum(simProblem['Targets'][:, JF.TaskFeatures.VALUE])
-    print("A-Star")
-    astar_start_time = time.time()
-    solution, g, expansions, branchFactor = AStar(simProblem, track_progress=True)
-    astar_end_time = time.time()
-    # print("\nUCS")
-    # ucs_start_time = time.time()
-    # ucs_solution, ucs_g, ucs_expansions, ucs_branchFactor = AStar(state, heuristic=ucs_heuristic)
-    # ucs_end_time = time.time()
-    Sim.printState(Sim.mergeState(simProblem['Effectors'], simProblem['Targets'], simProblem['Opportunities']))
-    print(f"{(len(simProblem['Effectors']), len(simProblem['Targets']))}")
-    print(
-        f"AStar solved in: {astar_end_time - astar_start_time:.6f}s, Expansions: {expansions}, branchFactor: {branchFactor}, Reward left: {g} / {rewards_available}, Steps: {solution}")
-    # print(
-    #    f"UCS solved in: {ucs_end_time - ucs_start_time:.6f}s, Expansions: {ucs_expansions}, branchFactor: {ucs_branchFactor}, Reward left: {ucs_g} / {rewards_available}, Steps: {ucs_solution}")
+
+    if solve_aStar:
+        print("A-Star")
+        astar_start_time = time.time()
+        solution, g = AStar(simProblem, track_progress=False)
+        astar_end_time = time.time()
+        print(f"AStar solved in: {astar_end_time - astar_start_time:.6f}s, Reward left: {g} / {rewards_available}, Steps: {solution}")
+    if solve_greedy:
+        print("Greedy")
+        greedy_start_time = time.time()
+        solution, g = greedy_rec(simProblem)
+        greedy_end_time = time.time()
+        print(f"greedy solved in {greedy_end_time - greedy_start_time:.6f}s, Reward left: {g} / {rewards_available}, Steps: {solution}")
