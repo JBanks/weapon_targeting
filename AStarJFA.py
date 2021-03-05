@@ -65,10 +65,6 @@ class Node:
 def greedy(problem):
     env = Sim.Simulation(Sim.state_to_dict)
     state = env.reset(problem)  # get initial state or load a new problem
-    pSuccesses = state['Opportunities'][:, :, JF.OpportunityFeatures.PSUCCESS]
-    values = state['Targets'][:, JF.TaskFeatures.VALUE]
-    total_reward = sum(values)
-    action = np.unravel_index(np.argmax(pSuccesses * values), pSuccesses.shape)
 
     node = Node(sum(state['Targets'][:, JF.TaskFeatures.VALUE]), None, state, 0)
     node = greedy_rec(node, env=env)
