@@ -62,6 +62,21 @@ class Node:
         return self.solution
 
 
+def random_solution(problem):
+    env = Sim.Simulation(Sim.state_to_dict)
+    state = env.reset(problem)
+    node = Node(sum(state['Targets'][:, JF.TaskFeatures.VALUE]), None, state, 0)
+    while (not node.terminal):
+        options = np.asarray(np.where(state['Opportunities'][:, :, JF.OpportunityFeatures.PSUCCESS] > 0)).transpose()
+        action_index = np.random.choice(len(options))
+        action = tuple(options[action_index])
+        state, reward, terminal = env.update_state(action, copy.deepcopy(state))
+        child = Node(node.g - reward, action, state, reward, terminal)
+        child.Parent(node)
+        node = child
+    return node.Solution(), node.g
+
+
 def greedy(problem):
     env = Sim.Simulation(Sim.state_to_dict)
     state = env.reset(problem)  # get initial state or load a new problem
@@ -187,8 +202,6 @@ def ucs_heuristic(state):
 
 
 if __name__ == '__main__':
-    solve_aStar = True
-    solve_greedy = True
     if len(sys.argv) > 1:
         filename = sys.argv[1]
         simProblem = PG.loadProblem(filename)
@@ -198,15 +211,14 @@ if __name__ == '__main__':
     Sim.printState(Sim.mergeState(simProblem['Effectors'], simProblem['Targets'], simProblem['Opportunities']))
     rewards_available = sum(simProblem['Targets'][:, JF.TaskFeatures.VALUE])
 
-    if solve_aStar:
-        print("A-Star")
-        astar_start_time = time.time()
-        solution, g = AStar(simProblem, track_progress=False)
-        astar_end_time = time.time()
-        print(f"AStar solved in: {astar_end_time - astar_start_time:.6f}s, Reward left: {g} / {rewards_available}, Steps: {solution}")
-    if solve_greedy:
-        print("Greedy")
-        greedy_start_time = time.time()
-        solution, g = greedy_rec(simProblem)
-        greedy_end_time = time.time()
-        print(f"greedy solved in {greedy_end_time - greedy_start_time:.6f}s, Reward left: {g} / {rewards_available}, Steps: {solution}")
+    solvers = [{'name': "AStar", 'function': AStar, 'solve': True},
+               {'name': "Greedy", 'function': greedy, 'solve': True},
+               {'name': "Random Choice", 'function': random_solution, 'solve': True}]
+
+    for solver in solvers:
+        if solver['solve']:
+            print(solver['name'])
+            start_time = time.time()
+            solution, g = solver['function'](simProblem)
+            end_time = time.time()
+            print(f"{solver['name']} solved in {end_time - start_time}s, reward left: {g} / {rewards_available}, stepd: {solution}")
