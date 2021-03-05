@@ -9,7 +9,6 @@ import json
 import urllib
 from flask import Flask, request, jsonify
 
-
 app = Flask(__name__)
 
 class AStarAgent():
@@ -21,11 +20,9 @@ agent = AStarAgent() #Sim.JeremyAgent()
 def CompareResults(pythonState, unityState):
 	pass
 
-
 @app.route('/', methods=['GET'])
 def test_connection():
 	return jsonify('The connection to the server was successful')
-
 
 @app.route('/', methods=['POST'])
 def get_action():
