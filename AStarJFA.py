@@ -104,16 +104,17 @@ def greedy_rec(node, env=None):
 
     twice = node
     effector, target = action
+    """
     if state['Targets'][target][JF.TaskFeatures.SELECTED] < 1 and state['Effectors'][effector][JF.EffectorFeatures.AMMOLEFT] >= state['Effectors'][effector][JF.EffectorFeatures.AMMORATE]:
         twice = Node(node.g - reward, action, state, reward, terminal)
         twice.Parent(node)
         twice = greedy_rec(twice, env)
-
+    """
     once = Node(node.g - reward, action, state, reward, terminal)
     once.Parent(node)
     once = greedy_rec(once, env)
 
-    return min(twice, once)
+    return once
 
 
 def astar_heuristic(node):
