@@ -12,7 +12,7 @@ import sys
 
 class Node:
     """
-    This node class is used to simplify storage and comparisson between different
+    This node class is used to simplify storage and comparison between different
     states that are reached by the search algorithm.
     """
     def __init__(self, g, action, state, reward, terminal=False):
@@ -86,6 +86,7 @@ def greedy(problem):
 
     return node.Solution(), node.g
 
+
 def greedy_rec(node, env=None):
     """
     This gives a baseline of choosing the best option first.
@@ -102,9 +103,9 @@ def greedy_rec(node, env=None):
         child.Parent(node)
         return child
 
+    """
     twice = node
     effector, target = action
-    """
     if state['Targets'][target][JF.TaskFeatures.SELECTED] < 1 and state['Effectors'][effector][JF.EffectorFeatures.AMMOLEFT] >= state['Effectors'][effector][JF.EffectorFeatures.AMMORATE]:
         twice = Node(node.g - reward, action, state, reward, terminal)
         twice.Parent(node)
