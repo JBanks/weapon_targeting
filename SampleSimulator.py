@@ -289,6 +289,9 @@ class Simulation:
 			effectorData, taskData, opportunityData = self.effectorData, self.taskData, self.opportunityData
 		else:
 			effectorData, taskData, opportunityData = unMergeState(state)
+			nbEffector = len(effectorData)
+			nbTask = len(taskData)
+
 
 		if type(action) == tuple:
 			effectorIndex, taskIndex = action
@@ -323,15 +326,15 @@ class Simulation:
 		task[JF.TaskFeatures.SELECTED] += 0.5 #Count the number of engagements so far
 
 		if task[JF.TaskFeatures.SELECTED] >= 1:     #Down the road: opportunities[:,:,selectable] &= task[:,selected] >= 1
-			for i in range(0, self.nbEffector):
+			for i in range(0, nbEffector):
 				opportunityData[i][taskIndex][JF.OpportunityFeatures.SELECTABLE] = False
 				opportunityData[i][taskIndex][JF.OpportunityFeatures.PSUCCESS] = 0
 
-		for i in range(0, self.nbTask):
-			EucDistance = Simulation.euclideanDistance(effector, self.taskData[i])
+		for i in range(0, nbTask):
+			EucDistance = Simulation.euclideanDistance(effector, taskData[i])
 			#If it wasn't selectable before, could that change?  If not, drop this set of operations whenever something is already unfeasible
 			if not effector[JF.EffectorFeatures.STATIC]:
-				RTDistance = Simulation.returnDistance(effector, self.taskData[i])
+				RTDistance = Simulation.returnDistance(effector, taskData[i])
 				travelDistance = max(0, EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE])
 				if (RTDistance > effector[JF.EffectorFeatures.ENERGYLEFT] / (effector[JF.EffectorFeatures.ENERGYRATE]) or
 					effector[JF.EffectorFeatures.TIMELEFT] < RTDistance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)):
@@ -440,7 +443,7 @@ def main():
 		while not terminal:
 			action = agent.getAction(state)
 			try:
-				new_state, reward, terminal =  env.update(action)
+				new_state, reward, terminal = env.update(action)
 				total_reward += reward
 			except Exception as e:
 				print(f"Error: {e}")

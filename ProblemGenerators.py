@@ -185,11 +185,10 @@ class ProblemGenerator():
 		return self.formatProblem()
 
 	def formatProblem(self):
-		problem = {}
-		problem['Arena'] = self.arena
-		problem['Effectors'] = self.effectors
-		problem['Targets'] = self.targets
-		problem['Opportunities'] = self.opportunities
+		problem = {'Arena': self.arena,
+			'Effectors': np.asarray(self.effectors),
+			'Targets': np.asarray(self.targets),
+			'Opportunities': np.asarray(self.opportunities)}
 		return problem
 
 	def populateTargets(self, qty):
@@ -216,9 +215,6 @@ class ProblemGenerator():
 					elif (RTDistance > self.effectors[i][JF.EffectorFeatures.ENERGYLEFT] / (self.effectors[i][JF.EffectorFeatures.ENERGYRATE]) or
 						self.effectors[i][JF.EffectorFeatures.TIMELEFT] < RTDistance / (self.effectors[i][JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)):
 						self.opportunities[i][j][JF.OpportunityFeatures.SELECTABLE] = False
-						# print(f"Effector: {i}, Target: {j}")
-						# print(f"Dist: {RTDistance > self.effectors[i][JF.EffectorFeatures.ENERGYLEFT] / self.effectors[i][JF.EffectorFeatures.ENERGYRATE]} : {RTDistance} > {self.effectors[i][JF.EffectorFeatures.ENERGYLEFT]} / {self.effectors[i][JF.EffectorFeatures.ENERGYRATE]}")
-						# print(f"Time: {self.effectors[i][JF.EffectorFeatures.TIMELEFT] < RTDistance / (self.effectors[i][JF.EffectorFeatures.SPEED] * STANDARDIZED_TIME * MAX_SPEED)} : {self.effectors[i][JF.EffectorFeatures.TIMELEFT]} < {RTDistance} / {self.effectors[i][JF.EffectorFeatures.SPEED] * STANDARDIZED_TIME * MAX_SPEED}")
 					else:
 						self.opportunities[i][j][JF.OpportunityFeatures.TIMECOST] = travelDistance / (self.effectors[i][JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)
 						self.opportunities[i][j][JF.OpportunityFeatures.ENERGYCOST] = travelDistance * self.effectors[i][JF.EffectorFeatures.ENERGYRATE] #Energy is related to fuel or essentially range
@@ -227,8 +223,8 @@ class ProblemGenerator():
 					if EucDistance > self.effectors[i][JF.EffectorFeatures.EFFECTIVEDISTANCE]:
 						self.opportunities[i][j][JF.OpportunityFeatures.SELECTABLE] = False
 
-				if self.opportunities[i][j][JF.OpportunityFeatures.SELECTABLE] == True:
-					self.opportunities[i][j][JF.OpportunityFeatures.PSUCCESS] = random.uniform(0.4, 0.7)
+				if self.opportunities[i][j][JF.OpportunityFeatures.SELECTABLE]:
+					self.opportunities[i][j][JF.OpportunityFeatures.PSUCCESS] = random.uniform(0.35, 0.65)
 				else:
 					self.opportunities[i][j][JF.OpportunityFeatures.PSUCCESS] = 0
 
