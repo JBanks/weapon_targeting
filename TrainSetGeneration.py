@@ -50,30 +50,31 @@ def uuid_url64():
 
 if __name__ == '__main__':
     effectors = 4
-    targets = 8
-    quantity = 100
+    targets = 10
+    quantity = 200
     if len(sys.argv) > 2:
         effectors = int(sys.argv[1])
         targets = int(sys.argv[2])
         if len(sys.argv) > 3:
             quantity = int(sys.argv[3])
-    directory = f"{effectors}x{targets}"
+    directory = f"Training_{effectors}x{targets}"
     try:
         os.mkdir(directory)
     except:
         pass
+
     env = Sim.Simulation(Sim.state_to_dict)
     csv_content = []
     for i in range(quantity):
         try:
             start_time = time.time()
-            filename = uuid_url64() + ".json"
+            filename = f"validation_{effectors}x{targets}_" + str(i).zfill(5) + ".json"
             simProblem = PG.network_validation(effectors, targets)
             #while find_TSP(simProblem):
             #    print("Travelling Salesman Problem found.  We cannot validate this with AStar, so we are generating a new problem.")
             #    simProblem = PG.network_validation(effectors, targets)
             Sim.saveProblem(simProblem, os.path.join(directory, filename))
-
+            '''
             state = env.reset(simProblem)  # get initial state or load a new problem
             rewards_available = sum(state['Targets'][:, JF.TaskFeatures.VALUE])
             selectable_opportunities = np.sum(state['Opportunities'][:,:,JF.OpportunityFeatures.SELECTABLE])
@@ -82,12 +83,16 @@ if __name__ == '__main__':
             csv_content.append([filename, g, rewards_available, solution])
             end_time = time.time()
             log(f"AStar solved {filename} in: {end_time - start_time:.6f}s")
+            '''
         except KeyboardInterrupt:
             input("Press Enter to attempt again, or ctrl+c to quit.")
+
     print()
 
+    '''
     csvfilename = os.path.join(directory, f'{time.time()}.csv')
     with open(csvfilename, 'w') as f:
         writer = csv.writer(f)
         writer.writerows(csv_content)
     log(f"solutions exported to {csvfilename}")
+    '''

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import heapq
-import SampleSimulator as Sim
-import ProblemGenerators as PG
-import JFAFeatures as JF
+from . import SampleSimulator as Sim
+from . import ProblemGenerators as PG
+from . import JFAFeatures as JF
 import numpy as np
 import copy
 import time
