@@ -3,22 +3,28 @@
 import SampleSimulator as Sim
 import ProblemGenerators as PG
 import JFAFeatures as JF
-import AStarJFA as AS
+import JFASolvers as JS
 import numpy as np
 import json
 import urllib
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
+pythonState = False
+env = Sim.Simulation(Sim.mergeState)
+
 
 class AStarAgent():
 	def getAction(self, state):
-		solution, __, __, __ = AS.AStar(state)
+		solution, __ = JS.AStar(state)
 		return solution[0]
 
 agent = AStarAgent() #Sim.JeremyAgent()
 def CompareResults(pythonState, unityState):
-	pass
+	print(f"U-Effector energy remaining: {unityState[:, 0, JF.EffectorFeatures.ENERGYLEFT]}")
+	print(f"U-Effector time remaining: {unityState[:, 0, JF.EffectorFeatures.TIMELEFT]}")
+	print(f"P-Effector energy remaining: {pythonState[:, 0, JF.EffectorFeatures.ENERGYLEFT]}")
+	print(f"P-Effector time remaining: {pythonState[:, 0, JF.EffectorFeatures.TIMELEFT]}")
 
 @app.route('/', methods=['GET'])
 def test_connection():
@@ -26,6 +32,7 @@ def test_connection():
 
 @app.route('/', methods=['POST'])
 def get_action():
+	global pythonState
 	#print(f"received: {request.data}")
 	json_string = urllib.parse.unquote(request.data.decode("UTF-8"))
 	problem = json.loads(json_string)
@@ -33,11 +40,11 @@ def get_action():
 		problem[key] = np.asarray(problem[key])
 
 	state = Sim.mergeState(problem['Effectors'], problem['Targets'], problem['Opportunities'])
-	#if pythonState:
-	#	CompareResults(pythonState, state)
+	if type(pythonState) == np.ndarray:
+		CompareResults(pythonState, state)
 	action = agent.getAction(problem)
 	print(f"Selected action: {action}")
-	#pythonState = env.update_state(action, state)
+	pythonState, _, _ = env.update_state((action[0], action[1]), state)
 	return jsonify({'assets': [int(action[0]), int(action[1])]})
 
 app.run()

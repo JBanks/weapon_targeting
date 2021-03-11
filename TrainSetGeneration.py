@@ -3,7 +3,7 @@
 import SampleSimulator as Sim
 import ProblemGenerators as PG
 import JFAFeatures as JF
-import AStarJFA as AS
+import JFASolvers as JS
 import numpy as np
 import time
 import uuid
@@ -27,9 +27,9 @@ if __name__ == '__main__':
     targets = 8
     quantity = 100
     solve_problems = True
-    solvers = [{'name': "Random Choice", 'function': AS.random_solution, 'solve': True},
-               {'name': "Greedy", 'function': AS.greedy, 'solve': True},
-               {'name': "AStar", 'function': AS.AStar, 'solve': True}] #AStar should be the last so that its solution get printed
+    solvers = [{'name': "Random Choice", 'function': JS.random_solution, 'solve': True},
+               {'name': "Greedy", 'function': JS.greedy, 'solve': True},
+               {'name': "AStar", 'function': JS.AStar, 'solve': True}] #AStar should be the last so that its solution get printed
     if len(sys.argv) > 2:
         effectors = int(sys.argv[1])
         targets = int(sys.argv[2])
