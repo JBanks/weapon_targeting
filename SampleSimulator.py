@@ -136,7 +136,7 @@ class Simulation:
 		"""
 		if problem is None:
 			if not hasattr(self, 'initialProblem'):
-				raise Exception("You must provide an intial problem to solve.")
+				raise Exception("You must provide an initial problem to solve.")
 			problem = self.initialProblem
 		else:
 			self.initialProblem = problem
