@@ -3,33 +3,30 @@
 import SampleSimulator as Sim
 import ProblemGenerators as PG
 import JFAFeatures as JF
-import AStarJFA as AS
+import JFASolvers as JS
 import numpy as np
 import time
-import uuid
-import base64
 import csv
 import sys
-import re
 import os
+import secrets
+
+TOKEN_LENGTH = 5
+
 
 def log(string):
     print(f"[{time.asctime()}] {string}")
 
-def uuid_url64():
-    """Returns a unique, 16 byte, URL safe ID by combining UUID and Base64
-    """
-    rv = base64.b64encode(uuid.uuid4().bytes).decode('utf-8')
-    return re.sub(r'[\=\+\/]', lambda m: {'+': '-', '/': '_', '=': ''}[m.group(0)], rv)
 
 if __name__ == '__main__':
     effectors = 4
     targets = 8
     quantity = 100
     solve_problems = True
-    solvers = [{'name': "Random Choice", 'function': AS.random_solution, 'solve': True},
-               {'name': "Greedy", 'function': AS.greedy, 'solve': True},
-               {'name': "AStar", 'function': AS.AStar, 'solve': True}] #AStar should be the last so that its solution get printed
+    solvers = [{'name': "Random Choice", 'function': JS.random_solution, 'solve': True},
+               {'name': "Greedy", 'function': JS.greedy, 'solve': True},
+               {'name': "AStar", 'function': JS.AStar, 'solve': True}]  # AStar should be the last so that its
+    # solution get printed
     if len(sys.argv) > 2:
         effectors = int(sys.argv[1])
         targets = int(sys.argv[2])
@@ -52,7 +49,7 @@ if __name__ == '__main__':
     csv_content.append(csv_row)
     for i in range(quantity):
         try:
-            filename = uuid_url64() + ".json"
+            filename = secrets.token_urlsafe(TOKEN_LENGTH) + ".json"
             simProblem = PG.network_validation(effectors, targets)
             while (np.sum(simProblem['Opportunities'][:,:,JF.OpportunityFeatures.SELECTABLE]) < 1):
                 simProblem = PG.network_validation(effectors, targets)
@@ -67,7 +64,7 @@ if __name__ == '__main__':
                 start_time = time.time()
                 for solver in solvers:
                     if solver['solve']:
-                        solution, g = solver['function'](simProblem)
+                        g, solution = solver['function'](simProblem)
                         csv_row.append(g)
                 end_time = time.time()
                 csv_row.append(solution)

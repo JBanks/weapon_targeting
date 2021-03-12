@@ -5,12 +5,13 @@ import math
 import JFAFeatures as JF
 
 MAX_SPEED = 6000
-MIN_RANGE = 10 # Assume that scale will be greater than 10 and less than 1000
+MIN_RANGE = 10  # Assume that scale will be greater than 10 and less than 1000
 MAX_RANGE = 1000
 DISPLACEMENT_NORMALIZATION = max(MAX_SPEED, MAX_RANGE)
 STANDARDIZED_SCALE = 500
 STANDARDIZED_TIME = 12
 SPEED_CORRECTION = STANDARDIZED_TIME * MAX_SPEED
+
 
 def loadProblem(filename):
 	problem = {}
@@ -20,12 +21,14 @@ def loadProblem(filename):
 		problem[key] = np.asarray(fromFile[key])
 	return problem
 
+
 def saveProblem(problem, filename):
 	toFile = {}
 	for key in problem.keys():
 		toFile[key] = np.asarray(problem[key]).tolist()
 	with open(filename, 'w') as file:
 		json.dump(toFile, file)
+
 
 def newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo):
 	x_low, x_high = x_range
@@ -46,6 +49,7 @@ def newEffector(Arena, x_range, y_range, static, speed, range, time, effective_d
 	effector[JF.EffectorFeatures.ENERGYRATE] = 1 / MAX_RANGE # Remove
 	return effector
 
+
 def newPlane(Arena):
 	"""
 	Aircraft is limited in munitions (a tank carries almost infinite ammunition).  Aircraft is designed to strike a target and leave.
@@ -63,12 +67,14 @@ def newPlane(Arena):
 	ammo = 2
 	return newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo)
 
+
 def newHelicopter(Arena):
 	"""
 	Extremely lethal with a much quicker cycle time compared to fixed-wing.
 	It can engage 2x as many targets, but it is more susceptible to counter-fire (If I can see them, they can see me)
 	"""
 	pass
+
 
 def newBoat(Arena):
 	"""
@@ -90,6 +96,7 @@ def newBoat(Arena):
 	ammo = 16
 	return newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo)
 
+
 def newArtillery(Arena):
 	"""
 	This will be a "missile battery", which has 9 launchers and can fire 12 missiles.  Could hit multiple targets at once.
@@ -108,6 +115,7 @@ def newArtillery(Arena):
 	ammo = 20
 	return newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo)
 
+
 def newArmoured(Arena):
 	"""
 	Tanks have near infinite amount of ammunition.
@@ -121,6 +129,7 @@ def newArmoured(Arena):
 	effective_distance = 0.5
 	ammo = 13
 	return newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo)
+
 
 def newInfantry(Arena):
 	"""
@@ -136,6 +145,7 @@ def newInfantry(Arena):
 	ammo = 2
 	return newEffector(Arena, x_range, y_range, static, speed, range, time, effective_distance, ammo)
 
+
 def newTarget(Arena, value=None):
 	target = np.zeros(len(JF.TaskFeatures))
 	target[JF.TaskFeatures.XPOS] = random.uniform(Arena[JF.ArenaFeatures.FRONTLINE], Arena[JF.ArenaFeatures.SCALE]) / STANDARDIZED_SCALE
@@ -147,8 +157,10 @@ def newTarget(Arena, value=None):
 	target[JF.TaskFeatures.SELECTED] = 0
 	return target
 
+
 def euclideanDistance(effector, task):
 	return math.sqrt( (effector[JF.EffectorFeatures.XPOS] - task[JF.TaskFeatures.XPOS])**2 + (effector[JF.EffectorFeatures.YPOS] - task[JF.TaskFeatures.YPOS])**2)
+
 
 def returnDistance(effector, task):
 	EucDistance = euclideanDistance(effector, task)
@@ -228,6 +240,7 @@ class ProblemGenerator():
 				else:
 					self.opportunities[i][j][JF.OpportunityFeatures.PSUCCESS] = 0
 
+
 def network_validation(nb_effectors=7, nb_targets=16):
 	arena = np.zeros(len(JF.ArenaFeatures))
 	arena[JF.ArenaFeatures.SCALE] = 50
@@ -237,14 +250,15 @@ def network_validation(nb_effectors=7, nb_targets=16):
 	arena[JF.ArenaFeatures.TIMEHORIZON] = 4
 	rands = []
 	total = nb_effectors
-	rands.append(random.randint(0,total))
-	rands.append(random.randint(0,total))
+	rands.append(random.randint(0, total))
+	rands.append(random.randint(0, total))
 	rands.sort()
 	artillery = rands[0]
 	armoured = rands[1] - artillery
 	infantry = total - (artillery + armoured)
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets=nb_targets, artillery=artillery, armoured=armoured, infantry=infantry)
+
 
 def allPlanes():
 	arena = np.zeros(len(JF.ArenaFeatures))
@@ -258,6 +272,7 @@ def allPlanes():
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, planes=planes)
 
+
 def boatsBoatsBoats():
 	arena = np.zeros(len(JF.ArenaFeatures))
 	arena[JF.ArenaFeatures.SCALE] = 100
@@ -269,6 +284,7 @@ def boatsBoatsBoats():
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, frigates=random.randint(9,13))
 
+
 def infantryOnly():
 	arena = np.zeros(len(JF.ArenaFeatures))
 	arena[JF.ArenaFeatures.SCALE] = 10
@@ -279,6 +295,7 @@ def infantryOnly():
 	targets = random.randint(4, 9)
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, infantry=random.randint(5,15))
+
 
 def combatArms():
 	arena = np.zeros(len(JF.ArenaFeatures))
@@ -298,6 +315,7 @@ def combatArms():
 	targets = random.randint(20, 30)
 	PG = ProblemGenerator()
 	return PG.newProblem(arena, targets, artillery=artillery, armoured=armoured, infantry=infantry)
+
 
 def tiny():
 	arena = np.zeros(len(JF.ArenaFeatures))
@@ -363,9 +381,5 @@ def toy():
 			opportunities[i][j][JF.OpportunityFeatures.TIMECOST] = travelDistance / (effectors[i][JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)
 			opportunities[i][j][JF.OpportunityFeatures.ENERGYCOST] = travelDistance * effectors[i][JF.EffectorFeatures.ENERGYRATE] #Energy is related to fuel or essentially range
 			opportunities[i][j][JF.OpportunityFeatures.PSUCCESS] = psuccess[i][j]
-	problem = {}
-	problem['Arena'] = arena
-	problem['Effectors'] = effectors
-	problem['Targets'] = targets
-	problem['Opportunities'] = opportunities
+	problem = {'Arena': arena, 'Effectors': effectors, 'Targets': targets, 'Opportunities': opportunities}
 	return problem

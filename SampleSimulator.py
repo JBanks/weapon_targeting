@@ -11,8 +11,10 @@ import sys
 
 SPEED_CORRECTION = PG.STANDARDIZED_TIME * PG.MAX_SPEED
 
+
 def euclideanDistance(effector, task):
 	return math.sqrt((effector[JF.EffectorFeatures.XPOS] - task[JF.TaskFeatures.XPOS])**2 + (effector[JF.EffectorFeatures.YPOS] - task[JF.TaskFeatures.YPOS])**2)
+
 
 def returnDistance(effector, task):
 	EucDistance = Simulation.euclideanDistance(effector, task)
@@ -21,6 +23,7 @@ def returnDistance(effector, task):
 	newY = effector[JF.EffectorFeatures.YPOS] + (task[JF.TaskFeatures.YPOS] - effector[JF.EffectorFeatures.YPOS]) * travelDistance / EucDistance
 	returnTrip = math.sqrt((effector[JF.EffectorFeatures.STARTX] - newX)**2 + (effector[JF.EffectorFeatures.STARTY] - newY)**2)
 	return travelDistance + returnTrip
+
 
 def printState(state):
 	trueFalseStrings = ["False", "True"]
@@ -87,8 +90,7 @@ def printGrid(state):
 		print("\n")
 
 
-
-class JeremyAgent():
+class JeremyAgent:
 	def getAction(state):
 		"""
 		Allows the user to control which action to take next by selecting an agent, and a task.
@@ -111,7 +113,7 @@ class JeremyAgent():
 		pass
 
 
-class AlexAgent():
+class AlexAgent:
 	pass
 
 
@@ -395,12 +397,14 @@ def mergeState(effectorData, taskData, opportunityData):
 	effectors = effectors.transpose([1,0,2]) #Transpose from m.n.p to n.m.p
 	return np.concatenate((effectors, tasks, opportunityData), axis=2) #concatenate on the 3rd axis
 
+
 def state_to_dict(effectorData, taskData, opportunityData):
 	state = {}
 	state['Effectors'] = effectorData
 	state['Targets'] = taskData
 	state['Opportunities'] = opportunityData
 	return state
+
 
 def unMergeState(state):
 	if type(state) == dict:
@@ -413,11 +417,14 @@ def unMergeState(state):
 		opportunityData = state[:,:,len(JF.EffectorFeatures) + len(JF.TaskFeatures):]
 	return effectorData, taskData, opportunityData
 
+
 def loadProblem(filename):
 	return PG.loadProblem(filename)
 
+
 def saveProblem(problem, filename):
 	PG.saveProblem(problem, filename)
+
 
 def main():
 	jeremy = 0
@@ -433,10 +440,10 @@ def main():
 		problemGenerator = random.choice(problemGenerators)
 
 		problemGenerator = PG.toy
-		simProblem =  problemGenerator()
+		simProblem = problemGenerator()
 
 	agent = agents[agentSelection]
-	state = env.reset(simProblem) #get initial state or load a new problem
+	state = env.reset(simProblem)  # get initial state or load a new problem
 	total_reward = 0
 	while True:
 		terminal = False
@@ -457,5 +464,6 @@ def main():
 		print(f"Reward Returned: {total_reward}")
 		state = env.reset()
 
+
 if __name__ == "__main__":
-    main()
+	main()
