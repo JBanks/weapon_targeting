@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-import ProblemGenerators as PG
-import JFAFeatures as JF
+from . import ProblemGenerators as PG
+from . import JFAFeatures as JF
 
 
 def printProblem(problem, arena=False):
