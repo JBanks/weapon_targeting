@@ -30,6 +30,7 @@ if __name__ == '__main__':
     targets = 8
     quantity = 100
     solve_problems = True
+    directory_arg = None
     solvers = [{'name': "Random Choice", 'function': JS.random_solution, 'solve': True},
                {'name': "Greedy", 'function': JS.greedy, 'solve': True},
                {'name': "AStar", 'function': JS.AStar, 'solve': True}] #AStar should be the last so that its solution get printed
@@ -41,7 +42,13 @@ if __name__ == '__main__':
             if len(sys.argv) > 4:
                 if int(sys.argv[4]) == 0:
                     solve_problems = False
-    directory = f"{effectors}x{targets}"
+                    if len(sys.argv) > 5:
+                        directory_arg = sys.argv[5]
+
+    if directory_arg is not None:
+        directory = directory_arg
+    else:
+        directory = f"{effectors}x{targets}"
     try:
         os.mkdir(directory)
     except:
