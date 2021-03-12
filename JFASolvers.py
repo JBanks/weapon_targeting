@@ -74,7 +74,7 @@ def random_solution(problem):
         child = Node(node.g - reward, action, state, reward, terminal)
         child.Parent(node)
         node = child
-    return node.Solution(), node.g
+    return node.g, node.Solution()
 
 
 def greedy(problem):
@@ -84,7 +84,7 @@ def greedy(problem):
     node = Node(sum(state['Targets'][:, JF.TaskFeatures.VALUE]), None, state, 0)
     node = greedy_rec(node, env=env)
 
-    return node.Solution(), node.g
+    return node.g, node.Solution()
 
 
 def greedy_rec(node, env=None):
@@ -172,7 +172,7 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=False):
             if node.terminal is True:
                 #print(f"\nTerminal node pulled: g = {node.g}")
                 if node.g == node.parent.g - node.reward:
-                    return node.Solution(), node.g
+                    return node.g, node.Solution()
                 #print(f"Sending node back to heap. g: {node.g} -> {node.parent.g - node.reward}")
                 node.g = node.parent.g - node.reward
                 heapq.heappush(frontier, node)
@@ -196,7 +196,7 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=False):
                 branchFactor += 1
             else:
                 duplicate_states += 1
-    return "failed", None
+    return None, "failed"
 
 
 def ucs_heuristic(state):
@@ -221,6 +221,6 @@ if __name__ == '__main__':
         if solver['solve']:
             print(solver['name'])
             start_time = time.time()
-            solution, g = solver['function'](simProblem)
+            g, solution = solver['function'](simProblem)
             end_time = time.time()
             print(f"{solver['name']} solved in {end_time - start_time}s, reward left: {g} / {rewards_available}, stepd: {solution}")

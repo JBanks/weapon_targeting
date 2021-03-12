@@ -17,35 +17,37 @@ def wta_ga_solver(values, p, weapons=None):
     for i in range(len(weapons)):
         for j in range(weapons[i]):
             adjusted_p.append(p[i])
-    WEAPONS = num_weapons
-    TARGETS = num_targets
-    POPULATION_SIZE = 40
-    CXPB, MUTPB, NGEN = 0.5, 0.25, 5000
+    population_size = 40
+    CXPB, MUTPB, NGEN = 0.5, 0.5, 5000
 
     def evaluate(individual):
         rem_vals = values.copy()
-        for weapon in range(WEAPONS):
+        for weapon in range(num_weapons):
             rem_vals[individual[weapon]] *= 1 - adjusted_p[weapon][individual[weapon]]
         return sum(rem_vals),
 
     history = tools.History()
     hall_of_fame = tools.HallOfFame(1)
+    if hasattr(creator, "FitnessMin"):  # deap doesn't like it when you recreate Creator methods.
+        del creator.FitnessMin
+    if hasattr(creator, "Individual"):
+        del creator.Individual
     creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
     creator.create("Individual", list, fitness=creator.FitnessMin)
 
     toolbox = base.Toolbox()
-    toolbox.register("attr_int", random.randint, 0, TARGETS-1)
-    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_int, n=WEAPONS)
+    toolbox.register("attr_int", random.randint, 0, num_targets-1)
+    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_int, n=num_weapons)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", evaluate)
     toolbox.register("mate", tools.cxTwoPoint)
-    toolbox.register("mutate", tools.mutUniformInt, low=0, up=TARGETS-1, indpb=0.1)
-    toolbox.register("select", tools.selTournament, tournsize=POPULATION_SIZE//5)
+    toolbox.register("mutate", tools.mutUniformInt, low=0, up=num_targets-1, indpb=0.1)
+    toolbox.register("select", tools.selTournament, tournsize=population_size//5)
 
     toolbox.decorate("mate", history.decorator)
     toolbox.decorate("mutate", history.decorator)
 
-    population = toolbox.population(n=POPULATION_SIZE)
+    population = toolbox.population(n=population_size)
     history.update(population)
     fitnesses = map(toolbox.evaluate, population)
 
@@ -74,11 +76,11 @@ def wta_ga_solver(values, p, weapons=None):
         population[:] = offspring
         hall_of_fame.update(population)
     best = hall_of_fame[0]
-    print(f"hall of fame: {hall_of_fame}: {hall_of_fame[0].fitness}")
+    # print(f"hall of fame: {hall_of_fame}: {hall_of_fame[0].fitness}")
     assignment_matrix = np.zeros((num_weapon_types, num_targets))
     for i in range(len(best)):
         assignment_matrix[i][best[i]] = 1
-    return assignment_matrix
+    return best.fitness.values[0], assignment_matrix
 
 
 def main():
@@ -91,7 +93,6 @@ def main():
     ]
 
     values = [76, 93, 91, 85, 55, 29, 66, 53]
-    weapons = [1, 1, 1, 1, 1, 1, 1, 1]
     p = [
         [0.706943154335022, 0.6360183954238892, 0.8114644885063171, 0.7272420525550842, 0.7375414967536926,
          0.6824339032173157, 0.6231933832168579, 0.6588988304138184],
