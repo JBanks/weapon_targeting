@@ -25,8 +25,8 @@ if __name__ == '__main__':
     solve_problems = True
     solvers = [{'name': "Random Choice", 'function': JS.random_solution, 'solve': True},
                {'name': "Greedy", 'function': JS.greedy, 'solve': True},
-               {'name': "AStar", 'function': JS.AStar, 'solve': True}]  # AStar should be the last so that its
-    # solution get printed
+               {'name': "AStar", 'function': JS.AStar, 'solve': True}]
+    # AStar should be the last solver so that its solution get printed
     if len(sys.argv) > 2:
         effectors = int(sys.argv[1])
         targets = int(sys.argv[2])
@@ -51,7 +51,7 @@ if __name__ == '__main__':
         try:
             filename = secrets.token_urlsafe(TOKEN_LENGTH) + ".json"
             simProblem = PG.network_validation(effectors, targets)
-            while (np.sum(simProblem['Opportunities'][:,:,JF.OpportunityFeatures.SELECTABLE]) < 1):
+            while np.sum(simProblem['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE]) < 1:
                 simProblem = PG.network_validation(effectors, targets)
             Sim.saveProblem(simProblem, os.path.join(directory, filename))
 
@@ -76,8 +76,8 @@ if __name__ == '__main__':
     print()
 
     if solve_problems:
-        csvfilename = os.path.join(directory, f'{time.time()}.csv')
-        with open(csvfilename, 'w') as f:
+        csv_filename = os.path.join(directory, f'{time.time()}.csv')
+        with open(csv_filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerows(csv_content)
-        log(f"solutions exported to {csvfilename}")
+        log(f"solutions exported to {csv_filename}")
