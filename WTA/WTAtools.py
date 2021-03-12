@@ -37,12 +37,14 @@ def new_problem(weapons=5, targets=5):
     return {"values": values, "p": p}
 
 
-def safe_filename(directory, size_str, json_prefix):
-    pass
+def safe_filename(size_str, json_prefix):
+    # TODO: Check that the number has been used or not; provide filename with prepended zeros
+    return json_prefix + "-" + secrets.token_urlsafe(TOKEN_LENGTH) + size_str + ".json"
 
 
 def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, csv_filename=time.time(),
                      json_prefix="train"):
+
     solvers = [{'name': "Genetic Algorithm", 'function': WTAGA.wta_ga_solver, 'solve': True},
                {'name': "OR-Tools", 'function': WTAOR.wta_or_solver, 'solve': True}]
 
@@ -61,7 +63,7 @@ def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, cs
     for i in range(quantity):
         try:
             problem = new_problem(weapons, targets)
-            filename = json_prefix + "-" + secrets.token_urlsafe(TOKEN_LENGTH) + size_str + ".json"
+            filename = safe_filename(size_str, json_prefix)
             save_problem(problem, os.path.join(size_str, filename))
 
             rewards_available = sum(problem['values'])
