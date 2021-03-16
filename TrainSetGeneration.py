@@ -68,7 +68,7 @@ def solver(quantity, directory, start_idx=0, prefix="", suffix="", digits=5, Ran
             start_time = time.time()
             for solver in solvers:
                 if solver['solve']:
-                    solution, g = solver['function'](simProblem)
+                    g, solution = solver['function'](simProblem)
                     csv_row.append((rewards_available-g))
             end_time = time.time()
 
@@ -127,7 +127,7 @@ def generate_dataset(effectors, targets, quantity, solve_problems=False, directo
                 start_time = time.time()
                 for solver in solvers:
                     if solver['solve']:
-                        solution, g = solver['function'](simProblem)
+                        g, solution = solver['function'](simProblem)
                         csv_row.append(g)
                 end_time = time.time()
                 csv_row.append(solution)
