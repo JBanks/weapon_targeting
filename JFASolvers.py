@@ -95,7 +95,8 @@ def greedy_rec(node, env=None):
 
     pSuccesses = state['Opportunities'][:, :, JF.OpportunityFeatures.PSUCCESS]
     values = state['Targets'][:, JF.TaskFeatures.VALUE]
-    action = np.unravel_index(np.argmax(pSuccesses * values), pSuccesses.shape)
+    selectable = state['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE]
+    action = np.unravel_index(np.argmax(pSuccesses * values * selectable), pSuccesses.shape)
 
     state, reward, terminal = env.update_state(action, copy.deepcopy(state))
     if terminal:
