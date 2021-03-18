@@ -43,7 +43,7 @@ def safe_filename(size_str, json_prefix):
 
 
 def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, csv_filename=time.time(),
-                     json_prefix="train"):
+                     json_prefix="train", json_name_offset=0):
 
     solvers = [{'name': "Genetic Algorithm", 'function': WTAGA.wta_ga_solver, 'solve': True},
                {'name': "OR-Tools", 'function': WTAOR.wta_or_solver, 'solve': True}]
