@@ -40,7 +40,7 @@ def wta_ga_solver(values, p, weapons=None, population_size=40, crossover_probabi
     toolbox.register("evaluate", evaluate)
     toolbox.register("mate", tools.cxTwoPoint)
     toolbox.register("mutate", tools.mutUniformInt, low=0, up=num_targets-1, indpb=1//mutation_fraction)
-    toolbox.register("select", tools.selTournament, tournsize=population_size//tournament_fraction)
+    toolbox.register("select", tools.selRoulette)  # tools.selTournament,tournsize=population_size//tournament_fraction)
 
     toolbox.decorate("mate", history.decorator)
     toolbox.decorate("mutate", history.decorator)
