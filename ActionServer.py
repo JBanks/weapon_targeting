@@ -7,27 +7,31 @@ import JFASolvers as JS
 import numpy as np
 import json
 import urllib
+import copy
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 pythonState = False
 env = Sim.Simulation(Sim.mergeState)
+MULTIPLE = True
 
 
-class AStarAgent:
-	def getAction(self, state):
-		solution, __ = JS.AStar(state)
-		return solution[0]
+def get_action_from_solver(state):
+	_, solution = JS.greedy(state)  # AStar(state)
+	return solution[0]
 
 
-agent = AStarAgent()  # Sim.JeremyAgent()
+def get_actions_from_solver(state):
+	_, solution = JS.greedy(state)
+	return solution
 
 
-def CompareResults(pythonState, unityState):
-	print(f"U-Effector energy remaining: {unityState[:, 0, JF.EffectorFeatures.ENERGYLEFT]}")
-	print(f"U-Effector time remaining: {unityState[:, 0, JF.EffectorFeatures.TIMELEFT]}")
-	print(f"P-Effector energy remaining: {pythonState[:, 0, JF.EffectorFeatures.ENERGYLEFT]}")
-	print(f"P-Effector time remaining: {pythonState[:, 0, JF.EffectorFeatures.TIMELEFT]}")
+def compare_results(python_state, unity_state):
+	pad = 0  # len(JF.EffectorFeatures) + len(JF.TaskFeatures)
+	print(f"U-Energy cost: {unity_state[:, 0, pad + JF.EffectorFeatures.ENERGYLEFT]}")
+	print(f"P-Energy cost: {python_state[:, 0, pad + JF.EffectorFeatures.ENERGYLEFT]}")
+	print(f"U-Time cost: {unity_state[:, 0, pad + JF.EffectorFeatures.TIMELEFT]}")
+	print(f"P-Time cost: {python_state[:, 0, pad + JF.EffectorFeatures.TIMELEFT]}")
 
 
 @app.route('/', methods=['GET'])
@@ -46,11 +50,18 @@ def get_action():
 
 	state = Sim.mergeState(problem['Effectors'], problem['Targets'], problem['Opportunities'])
 	if type(pythonState) == np.ndarray:
-		CompareResults(pythonState, state)
-	action = agent.getAction(problem)
-	print(f"Selected action: {action}")
-	pythonState, _, _ = env.update_state((action[0], action[1]), state.copy())
-	return jsonify({'assets': [int(action[0]), int(action[1])]})
-
+		compare_results(pythonState, state)
+	if MULTIPLE:
+		actions = get_actions_from_solver(copy.deepcopy(problem))
+		print(f"selection actions: {actions}")
+		assets = {'assets': []}
+		for action in actions:
+			assets['assets'].append([int(action[0]), int(action[1])])
+		return jsonify(assets)
+	else:
+		action = get_action_from_solver(copy.deepcopy(problem))
+		print(f"Selected action: {action}")
+		pythonState, _, _ = env.update_state((action[0], action[1]), state.copy())
+		return jsonify({'assets': [int(action[0]), int(action[1])]})
 
 app.run()
