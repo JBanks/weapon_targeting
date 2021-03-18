@@ -203,7 +203,7 @@ class Simulation:
 		task = self.taskData[taskIndex, :]
 		opportunity = self.opportunityData[effectorIndex, taskIndex, :]
 		if opportunity[JF.OpportunityFeatures.SELECTABLE] == False:
-			raise Exception(f"This action is not selectable. Effector: {effectorIndex} Task: {taskIndex}")
+			raise IndexError(f"This action is not selectable. Effector: {effectorIndex} Task: {taskIndex}")
 
 		#first copy the tensor (not by ref.. make sure to do actual copy)
 		if self.keepstack:
