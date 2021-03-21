@@ -42,18 +42,17 @@ def test_connection():
 @app.route('/', methods=['POST'])
 def get_action():
 	global pythonState
-	# print(f"received: {request.data}")
 	json_string = urllib.parse.unquote(request.data.decode("UTF-8"))
 	problem = json.loads(json_string)
 	for key in problem.keys():
 		problem[key] = np.asarray(problem[key])
-
+	PG.correct_effector_data(problem)
 	state = Sim.mergeState(problem['Effectors'], problem['Targets'], problem['Opportunities'])
 	if type(pythonState) == np.ndarray:
 		compare_results(pythonState, state)
 	if MULTIPLE:
 		actions = get_actions_from_solver(copy.deepcopy(problem))
-		print(f"selection actions: {actions}")
+		print(f"selected actions: {actions}")
 		assets = {'assets': []}
 		for action in actions:
 			assets['assets'].append([int(action[0]), int(action[1])])
@@ -63,5 +62,6 @@ def get_action():
 		print(f"Selected action: {action}")
 		pythonState, _, _ = env.update_state((action[0], action[1]), state.copy())
 		return jsonify({'assets': [int(action[0]), int(action[1])]})
+
 
 app.run()
