@@ -3,9 +3,10 @@ from deap import base
 from deap import creator
 from deap import tools
 import numpy as np
+from WTAtools import *
 
 
-def wta_ga_solver(values, p, weapons=None, population_size=40, crossover_probability=0.5, mutation_probability=0.25,
+def wta_ga_solver(values, p, weapons=None, population_size=80, crossover_probability=0.5, mutation_probability=0.25,
                   generations_qty=5000, tournament_fraction=5, mutation_fraction=10):
     # TODO: Tune parameters to find a relation between problem size and each parameter
     if weapons is None:
@@ -78,3 +79,9 @@ def wta_ga_solver(values, p, weapons=None, population_size=40, crossover_probabi
     for i in range(len(best)):
         assignment_matrix[i][best[i]] = 1
     return best.fitness.values[0], assignment_matrix
+
+
+if __name__ == "__main__":
+    problem = load_problem('5x5\\5x5-95J0qf8.json')
+    result = wta_ga_solver(problem['values'], problem['p'])
+    print(result)
