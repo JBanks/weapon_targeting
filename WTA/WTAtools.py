@@ -143,7 +143,7 @@ def grid_search(num_problems=25, num_attempts=5, numbering_offset=0, sizes=None)
                                 specific_values.append(gs)
                                 problem_results.append(sum(gs) / num_attempts)
                                 completed += 1
-                                print("\b"*14, f"{completed} / {evaluations_per_problem}", end="")
+                                print(f"{completed} / {evaluations_per_problem}", end="\r")
                                 # print(f"\b\b: {sum(gs)/num_attempts}")
             print()
             csv_filename = os.path.join("problems", f'{identifier}.csv')
