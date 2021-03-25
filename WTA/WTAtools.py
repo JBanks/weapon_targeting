@@ -6,6 +6,7 @@ import secrets
 import os
 import time
 import csv
+import argparse
 
 TOKEN_LENGTH = 5
 
@@ -44,7 +45,6 @@ def safe_filename(size_str, json_prefix):
 
 def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, csv_filename=time.time(),
                      json_prefix="train", json_name_offset=0):
-
     solvers = [{'name': "Genetic Algorithm", 'function': WTAGA.wta_ga_solver, 'solve': True},
                {'name': "OR-Tools", 'function': WTAOR.wta_or_solver, 'solve': True}]
 
@@ -78,7 +78,7 @@ def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, cs
                         csv_row.append(solution)
                 end_time = time.time()
                 csv_content.append(csv_row)
-                log(f"Solved {i+1}/{quantity}: {filename} in: {end_time - start_time:.6f}s")
+                log(f"Solved {i + 1}/{quantity}: {filename} in: {end_time - start_time:.6f}s")
         except KeyboardInterrupt:
             input("Press Enter to attempt again, or ctrl+c to quit.")
     print()
@@ -90,14 +90,20 @@ def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, cs
         log(f"solutions exported to {csv_filename}")
 
 
-def grid_search(num_problems=100, num_attempts=5, numbering_offset=0):
-    problem_sizes = [(3, 3), (4, 4), (5, 5), (7, 7), (10, 10)]
-    population_sizes = [20, 40, 60, 80]  # , 100]
+def grid_search(num_problems=25, num_attempts=5, numbering_offset=0, sizes=None):
+    if sizes is None:
+        sizes = [3, 4, 5, 7, 10]
+    problem_sizes = []
+    for size in sizes:
+        problem_sizes.append((size, size))
+    population_sizes = [40, 60, 80]  # , 100]
     crossover_probabilities = [0.1, 0.3, 0.5]  # , 0.7]
     mutation_probabilities = [0.1, 0.25, 0.4]
-    generations_qtys = [500, 1000, 2000, 5000]  # , 10000]
+    generations_qtys = [500, 1000, 2000]  # , 5000]  # , 10000]
     tournament_fractions = [2, 5, 10]
-    mutation_fractions = [2, 4, 6, 10]
+    mutation_fractions = [4, 6, 10]
+    evaluations_per_problem = np.product([len(mutation_fractions), len(generations_qtys), len(mutation_probabilities),
+                                          len(crossover_probabilities), len(population_sizes)])
     for problem_size in problem_sizes:
         log(f"Testing dataset for problems of size {problem_size}")
         problem_set_results = []
@@ -118,6 +124,7 @@ def grid_search(num_problems=100, num_attempts=5, numbering_offset=0):
             identifier = f"{problem_size[0]}x{problem_size[1]}-{i:04d}"
             save_problem(problem, os.path.join("problems", identifier + ".json"))
             log(f"{g} -- Problem: {i - numbering_offset} / {num_problems}")
+            completed = 0
             for population_size in population_sizes:
                 for crossover_probability in crossover_probabilities:
                     for mutation_probability in mutation_probabilities:
@@ -134,9 +141,11 @@ def grid_search(num_problems=100, num_attempts=5, numbering_offset=0):
                                     gs.append(g)
                                     # print(f"{g}, ", end="")
                                 specific_values.append(gs)
-                                problem_results.append(sum(gs)/num_attempts)
+                                problem_results.append(sum(gs) / num_attempts)
+                                completed += 1
+                                print("\b"*14, f"{completed} / {evaluations_per_problem}", end="")
                                 # print(f"\b\b: {sum(gs)/num_attempts}")
-
+            print()
             csv_filename = os.path.join("problems", f'{identifier}.csv')
             with open(csv_filename, 'w') as f:
                 writer = csv.writer(f)
@@ -151,4 +160,10 @@ def grid_search(num_problems=100, num_attempts=5, numbering_offset=0):
 
 
 if __name__ == "__main__":
-    grid_search()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--quantity', type=int, help="The number of problems of each size", default=25, required=False)
+    parser.add_argument('--sizes', type=int, nargs='*', help="The square dimensions of a problem sizes",
+                        default=[3, 4, 5, 7, 10], required=False)
+    parser.add_argument('--offset', type=int, help="Numbering offset for scenarios", default=0, required=False)
+    args = parser.parse_args()
+    grid_search(num_problems=args.quantity, numbering_offset=args.offset, sizes=args.sizes)
