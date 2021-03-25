@@ -114,7 +114,7 @@ def grid_search(num_problems=100, num_attempts=5, numbering_offset=0):
             g, solution = WTAOR.wta_or_solver(problem['values'], problem['p'])
             problem_results = [g]
             specific_values = [[g]]
-            identifier = f"{problem_size[0]}x{problem_size[1]}-{i:4d}"
+            identifier = f"{problem_size[0]}x{problem_size[1]}-{i:04d}"
             save_problem(problem, os.path.join("problems", identifier + ".json"))
             print(f"{g} -- ")
             for population_size in population_sizes:
