@@ -92,10 +92,10 @@ def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, cs
 
 def grid_search(num_problems=100, num_attempts=5, numbering_offset=0):
     problem_sizes = [(3, 3), (4, 4), (5, 5), (7, 7), (10, 10)]
-    population_sizes = [20, 40, 60, 80, 100]
-    crossover_probabilities = [0.1, 0.3, 0.5, 0.7]
+    population_sizes = [20, 40, 60, 80]  # , 100]
+    crossover_probabilities = [0.1, 0.3, 0.5]  # , 0.7]
     mutation_probabilities = [0.1, 0.25, 0.4]
-    generations_qtys = [500, 1000, 2000, 5000, 10000]
+    generations_qtys = [500, 1000, 2000, 5000]  # , 10000]
     tournament_fractions = [2, 5, 10]
     mutation_fractions = [2, 4, 6, 10]
     for problem_size in problem_sizes:
