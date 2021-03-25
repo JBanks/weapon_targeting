@@ -99,6 +99,7 @@ def grid_search(num_problems=100, num_attempts=5, numbering_offset=0):
     tournament_fractions = [2, 5, 10]
     mutation_fractions = [2, 4, 6, 10]
     for problem_size in problem_sizes:
+        print(f"Testing dataset for problems of size {problem_size}")
         problem_set_results = []
         header = []
         for population_size in population_sizes:
@@ -116,7 +117,7 @@ def grid_search(num_problems=100, num_attempts=5, numbering_offset=0):
             specific_values = [[g]]
             identifier = f"{problem_size[0]}x{problem_size[1]}-{i:04d}"
             save_problem(problem, os.path.join("problems", identifier + ".json"))
-            print(f"{g} -- ")
+            print(f"{g} -- Problem: {i - numbering_offset} / {num_problems}")
             for population_size in population_sizes:
                 for crossover_probability in crossover_probabilities:
                     for mutation_probability in mutation_probabilities:
@@ -131,10 +132,10 @@ def grid_search(num_problems=100, num_attempts=5, numbering_offset=0):
                                                                       generations_qty=generations_qty,
                                                                       mutation_fraction=mutation_fraction)
                                     gs.append(g)
-                                    print(f"{g}, ", end="")
+                                    # print(f"{g}, ", end="")
                                 specific_values.append(gs)
                                 problem_results.append(sum(gs)/num_attempts)
-                                print(f"\b\b: {sum(gs)/num_attempts}")
+                                # print(f"\b\b: {sum(gs)/num_attempts}")
 
             csv_filename = os.path.join("problems", f'{identifier}.csv')
             with open(csv_filename, 'w') as f:
