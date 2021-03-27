@@ -95,7 +95,8 @@ def greedy_rec(node, env=None):
 
     pSuccesses = state['Opportunities'][:, :, JF.OpportunityFeatures.PSUCCESS]
     values = state['Targets'][:, JF.TaskFeatures.VALUE]
-    action = np.unravel_index(np.argmax(pSuccesses * values), pSuccesses.shape)
+    selectable = state['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE]
+    action = np.unravel_index(np.argmax(pSuccesses * values * selectable), pSuccesses.shape)
 
     state, reward, terminal = env.update_state(action, copy.deepcopy(state))
     if terminal:
@@ -213,9 +214,9 @@ if __name__ == '__main__':
     Sim.printState(Sim.mergeState(simProblem['Effectors'], simProblem['Targets'], simProblem['Opportunities']))
     rewards_available = sum(simProblem['Targets'][:, JF.TaskFeatures.VALUE])
 
-    solvers = [{'name': "AStar", 'function': AStar, 'solve': True},
+    solvers = [{'name': "AStar", 'function': AStar, 'solve': False},
                {'name': "Greedy", 'function': greedy, 'solve': True},
-               {'name': "Random Choice", 'function': random_solution, 'solve': True}]
+               {'name': "Random Choice", 'function': random_solution, 'solve': False}]
 
     for solver in solvers:
         if solver['solve']:

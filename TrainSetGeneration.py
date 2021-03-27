@@ -51,8 +51,6 @@ def solver(quantity, directory, start_idx=0, prefix="", suffix="", digits=5, Ran
         writer = csv.writer(f)
         writer.writerow(csv_row)
 
-
-
     for i in range(start_idx, start_idx+quantity):
         try:
             # load the appropriate problem from the file
@@ -65,12 +63,13 @@ def solver(quantity, directory, start_idx=0, prefix="", suffix="", digits=5, Ran
 
             # solve problem using all selected solvers
             csv_row = [filename, rewards_available]
-            start_time = time.time()
             for solver in solvers:
                 if solver['solve']:
+                    start_time = time.time()
                     g, solution = solver['function'](simProblem)
                     csv_row.append((rewards_available-g))
-            end_time = time.time()
+                    end_time = time.time()
+                    print(f"Total time to solve problem {i} using {solver['name']}:\n{end_time - start_time}")
 
             # record the last generated solution (should usually be from A*) in the CSV file
             # this is done at each step to avoid losing data if the solvers hangs on a problem
