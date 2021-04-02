@@ -107,7 +107,7 @@ def grid_search(num_problems=25, num_attempts=5, numbering_offset=0, sizes=None)
     for problem_size in problem_sizes:
         log(f"Testing dataset for problems of size {problem_size}")
         problem_set_results = []
-        header = []
+        header = ['']
         for population_size in population_sizes:
             for crossover_probability in crossover_probabilities:
                 for mutation_probability in mutation_probabilities:
@@ -119,6 +119,7 @@ def grid_search(num_problems=25, num_attempts=5, numbering_offset=0, sizes=None)
         for i in range(numbering_offset, num_problems + numbering_offset):
             problem = new_problem(*problem_size)
             g, solution = WTAOR.wta_or_solver(problem['values'], problem['p'])
+            g = sum(problem['values']) - g
             problem_results = [g]
             specific_values = [[g]]
             identifier = f"{problem_size[0]}x{problem_size[1]}-{i:04d}"
@@ -162,7 +163,7 @@ def grid_search(num_problems=25, num_attempts=5, numbering_offset=0, sizes=None)
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--quantity', type=int, help="The number of problems of each size", default=25, required=False)
-    parser.add_argument('--sizes', type=int, nargs='*', help="The square dimensions of a problem sizes",
+    parser.add_argument('--sizes', type=int, nargs='*', help="The problem sizes (problems are all squares)",
                         default=[3, 4, 5, 7, 10], required=False)
     parser.add_argument('--offset', type=int, help="Numbering offset for scenarios", default=0, required=False)
     args = parser.parse_args()
