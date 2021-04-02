@@ -14,6 +14,7 @@ def wta_ga_solver(values, p, weapons=None, population_size=80, crossover_probabi
     num_weapon_types = len(p)
     num_targets = len(p[0])
     num_weapons = sum(weapons)
+    total_value = sum(values)
     adjusted_p = []
     for i in range(len(weapons)):
         for j in range(weapons[i]):
@@ -23,16 +24,19 @@ def wta_ga_solver(values, p, weapons=None, population_size=80, crossover_probabi
         rem_vals = values.copy()
         for weapon in range(num_weapons):
             rem_vals[individual[weapon]] *= 1 - adjusted_p[weapon][individual[weapon]]
-        return sum(rem_vals),
+        return total_value - sum(rem_vals),
 
     history = tools.History()
     hall_of_fame = tools.HallOfFame(1)
     if hasattr(creator, "FitnessMin"):  # deap doesn't like it when you recreate Creator methods.
         del creator.FitnessMin
+    if hasattr(creator, "FitnessMax"):  # deap doesn't like it when you recreate Creator methods.
+        del creator.FitnessMax
     if hasattr(creator, "Individual"):
         del creator.Individual
     creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
-    creator.create("Individual", list, fitness=creator.FitnessMin)
+    creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+    creator.create("Individual", list, fitness=creator.FitnessMax)
 
     toolbox = base.Toolbox()
     toolbox.register("attr_int", random.randint, 0, num_targets-1)
