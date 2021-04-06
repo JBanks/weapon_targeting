@@ -327,7 +327,7 @@ class Simulation:
         task = taskData[taskIndex, :]
         opportunity = opportunityData[effectorIndex, taskIndex, :]
         if opportunity[JF.OpportunityFeatures.SELECTABLE] == False:
-            raise Exception(f"This action is not selectable. Effector: {effectorIndex} Task: {taskIndex}")
+            raise IndexError(f"This action is not selectable. Effector: {effectorIndex} Task: {taskIndex}")
 
         EucDistance = Simulation.euclideanDistance(effector, task)
         travelDistance = EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE]
