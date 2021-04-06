@@ -96,10 +96,10 @@ def grid_search(num_problems=25, num_attempts=5, numbering_offset=0, sizes=None)
     problem_sizes = []
     for size in sizes:
         problem_sizes.append((size, size))
-    population_sizes = [40, 60, 80]  # , 100]
-    crossover_probabilities = [0.1, 0.3, 0.5]  # , 0.7]
+    population_sizes = [80, 120]
+    crossover_probabilities = [0.5, 0.7]
     mutation_probabilities = [0.1, 0.25, 0.4]
-    generations_qtys = [500, 1000, 2000]  # , 5000]  # , 10000]
+    generations_qtys = [1000, 2000]  # , 5000]  # , 10000]
     tournament_fractions = [2, 5, 10]
     mutation_fractions = [4, 6, 10]
     evaluations_per_problem = np.product([len(mutation_fractions), len(generations_qtys), len(mutation_probabilities),
@@ -162,7 +162,7 @@ def grid_search(num_problems=25, num_attempts=5, numbering_offset=0, sizes=None)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--quantity', type=int, help="The number of problems of each size", default=25, required=False)
+    parser.add_argument('--quantity', type=int, help="The number of problems of each size", default=10, required=False)
     parser.add_argument('--sizes', type=int, nargs='*', help="The problem sizes (problems are all squares)",
                         default=[3, 4, 5, 7, 10], required=False)
     parser.add_argument('--offset', type=int, help="Numbering offset for scenarios", default=0, required=False)
