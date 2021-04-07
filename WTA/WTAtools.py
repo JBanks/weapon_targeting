@@ -96,12 +96,12 @@ def grid_search(num_problems=25, num_attempts=5, numbering_offset=0, sizes=None)
     problem_sizes = []
     for size in sizes:
         problem_sizes.append((size, size))
-    population_sizes = [80, 120]
-    crossover_probabilities = [0.5, 0.7]
-    mutation_probabilities = [0.1, 0.25, 0.4]
-    generations_qtys = [1000, 2000]  # , 5000]  # , 10000]
+    population_sizes = [256]
+    crossover_probabilities = [0.7]
+    mutation_probabilities = [0.4]
+    generations_qtys = [5000]  # , 10000]
     tournament_fractions = [2, 5, 10]
-    mutation_fractions = [4, 6, 10]
+    mutation_fractions = [10]
     evaluations_per_problem = np.product([len(mutation_fractions), len(generations_qtys), len(mutation_probabilities),
                                           len(crossover_probabilities), len(population_sizes)])
     for problem_size in problem_sizes:
@@ -117,13 +117,17 @@ def grid_search(num_problems=25, num_attempts=5, numbering_offset=0, sizes=None)
                                           f"{generations_qty}-{mutation_fraction}")
         problem_set_results.append(header)
         for i in range(numbering_offset, num_problems + numbering_offset):
-            problem = new_problem(*problem_size)
+            identifier = f"{problem_size[0]}x{problem_size[1]}-{i:04d}"
+            filepath = os.path.join("problems", identifier + ".json")
+            if os.path.exists(filepath):
+                problem = load_problem(filepath)
+            else:
+                problem = new_problem(*problem_size)
+                save_problem(problem, filepath)
             g, solution = WTAOR.wta_or_solver(problem['values'], problem['p'])
             g = sum(problem['values']) - g
             problem_results = [g]
             specific_values = [[g]]
-            identifier = f"{problem_size[0]}x{problem_size[1]}-{i:04d}"
-            save_problem(problem, os.path.join("problems", identifier + ".json"))
             log(f"{g} -- Problem: {i - numbering_offset} / {num_problems}")
             completed = 0
             for population_size in population_sizes:
@@ -162,7 +166,7 @@ def grid_search(num_problems=25, num_attempts=5, numbering_offset=0, sizes=None)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--quantity', type=int, help="The number of problems of each size", default=10, required=False)
+    parser.add_argument('--quantity', type=int, help="The number of problems of each size", default=1, required=False)
     parser.add_argument('--sizes', type=int, nargs='*', help="The problem sizes (problems are all squares)",
                         default=[3, 4, 5, 7, 10], required=False)
     parser.add_argument('--offset', type=int, help="Numbering offset for scenarios", default=0, required=False)
