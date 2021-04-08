@@ -1,7 +1,16 @@
 from ortools.sat.python import cp_model
 import numpy as np
 import argparse
-from WTAtools import load_problem, save_problem
+import json
+
+
+def load_problem(filename):
+    problem = {}
+    with open(filename, 'r') as file:
+        from_file = json.load(file)
+    for key in from_file.keys():
+        problem[key] = np.asarray(from_file[key])
+    return problem
 
 
 def wta_or_solver(values, p, weapons=None):
