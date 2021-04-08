@@ -1,5 +1,7 @@
 from ortools.sat.python import cp_model
 import numpy as np
+import argparse
+from WTAtools import load_problem, save_problem
 
 
 def wta_or_solver(values, p, weapons=None):
@@ -99,3 +101,16 @@ def wta_or_solver(values, p, weapons=None):
         print("Model:")
         print(model.Proto())
         print(f"Validated: {model.Validate()}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--problem', type=str, help="The filename of the problem json you would like to load",
+                        default='5x5\\5x5-95J0qf8.json')
+    args = parser.parse_args()
+
+    problem = load_problem(args.problem)
+
+    result = wta_or_solver(problem['values'], problem['p'])
+    print(result)
+
