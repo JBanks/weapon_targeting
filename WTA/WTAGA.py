@@ -3,11 +3,21 @@ from deap import base
 from deap import creator
 from deap import tools
 import numpy as np
-from WTAtools import *
+import argparse
+import json
 
 
-def wta_ga_solver(values, p, weapons=None, population_size=80, crossover_probability=0.5, mutation_probability=0.25,
-                  generations_qty=5000, tournament_fraction=5, mutation_fraction=10):
+def load_problem(filename):
+    problem = {}
+    with open(filename, 'r') as file:
+        from_file = json.load(file)
+    for key in from_file.keys():
+        problem[key] = np.asarray(from_file[key])
+    return problem
+
+
+def wta_ga_solver(values, p, weapons=None, population_size=256, crossover_probability=0.7, mutation_probability=0.4,
+                  generations_qty=15000, tournament_fraction=5, mutation_fraction=10):
     # TODO: Tune parameters to find a relation between problem size and each parameter
     if weapons is None:
         weapons = [1]*len(p)
@@ -86,6 +96,11 @@ def wta_ga_solver(values, p, weapons=None, population_size=80, crossover_probabi
 
 
 if __name__ == "__main__":
-    problem = load_problem('5x5\\5x5-95J0qf8.json')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--problem', type=str, help="The filename of the problem json you would like to load",
+                        default='5x5\\5x5-95J0qf8.json')
+    args = parser.parse_args()
+
+    problem = load_problem(args.problem)
     result = wta_ga_solver(problem['values'], problem['p'])
     print(result)
