@@ -120,6 +120,6 @@ if __name__ == "__main__":
 
     problem = load_problem(args.problem)
 
-    result = wta_or_solver(problem['values'], problem['p'])
+    result = wta_or_solver(problem['values'].tolist(), problem['p'].tolist())
     print(result)
 
