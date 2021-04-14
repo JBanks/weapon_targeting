@@ -84,7 +84,7 @@ def greedy(problem):
     node = Node(sum(state['Targets'][:, JF.TaskFeatures.VALUE]), None, state, 0)
     node = greedy_rec(node, env=env)
 
-    return node.g, node.Solution()
+    return sum(state['Targets'][:, JF.TaskFeatures.VALUE]) - node.g, node.Solution()
 
 
 def greedy_rec(node, env=None):
@@ -199,14 +199,14 @@ if __name__ == '__main__':
         filename = sys.argv[1]
         simProblem = PG.loadProblem(filename)
     else:
-        simProblem = PG.network_validation(4, 8)
+        simProblem = PG.network_validation(20, 200)
     print(f"Problem size: {(len(simProblem['Effectors']), len(simProblem['Targets']))}")
     Sim.printState(Sim.mergeState(simProblem['Effectors'], simProblem['Targets'], simProblem['Opportunities']))
     rewards_available = sum(simProblem['Targets'][:, JF.TaskFeatures.VALUE])
 
     solvers = [{'name': "AStar", 'function': AStar, 'solve': True},
                {'name': "Greedy", 'function': greedy, 'solve': True},
-               {'name': "Random Choice", 'function': random_solution, 'solve': True}]
+               {'name': "Random Choice", 'function': random_solution, 'solve': False}]
 
     for solver in solvers:
         if solver['solve']:
@@ -214,4 +214,5 @@ if __name__ == '__main__':
             start_time = time.time()
             g, solution = solver['function'](simProblem)
             end_time = time.time()
-            print(f"{solver['name']} solved in {end_time - start_time}s, reward left: {g} / {rewards_available}, stepd: {solution}")
+            print(f"{solver['name']} solved in {end_time - start_time}s, reward left: {g} /"
+                  f" {rewards_available}, steps: {solution}")
