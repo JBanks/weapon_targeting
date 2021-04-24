@@ -132,7 +132,8 @@ def jfa_ga_explorer(problem, population_size=40, generations_qty=5000, crossover
                 best_actions = [opportunities[i] for i in hall_of_fame[0]]
             actions.append(best_actions)
         if not g % 20:
-            print(f"Generation: {g}")
+            # print(f"Generation: {g}")
+            pass
 
     return rewards, times, actions
 
@@ -141,10 +142,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--problem', type=str, help="The filename of the problem json you would like to load",
                         default='4x10\\GVeCUHSIRJGfhz0lHlwcvw.json')
-    parser.add_argument('--population', type=int, help="The size of the population for each generation", default=80)
-    parser.add_argument('--generations', type=int, help="The number of generations to evaluate for", default=200)
+    parser.add_argument('--population', type=int, help="The size of the population for each generation", default=240)
+    parser.add_argument('--generations', type=int, help="The number of generations to evaluate for", default=400)
     args = parser.parse_args()
 
     scenario = pg.loadProblem(args.problem)
-    result = jfa_ga_solver(scenario, population_size=args.population, generations_qty=args.generations)
-    print(result)
+    rewards, actions = jfa_ga_solver(scenario, population_size=args.population, generations_qty=args.generations)
+    print(rewards)

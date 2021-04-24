@@ -17,7 +17,7 @@ def wta_or_solver(values, p, weapons=None):
     if weapons is None:
         weapons = [1]*len(p)
     model = cp_model.CpModel()
-    growth_factor = 10000
+    growth_factor = 10_000
 
     values = [value * growth_factor for value in values]
 

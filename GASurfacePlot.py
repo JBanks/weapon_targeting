@@ -19,9 +19,8 @@ def collect_datapoints(problem, populations=(80, 120, 160, 200), generations=100
 
 
 def create_surface_plot(datapoints, populations=(80, 120, 160, 200), generations=100):
-    axis1 = np.linspace(min(populations), max(populations), len(populations))
     axis2 = np.linspace(0, generations, len(datapoints[0][0]))
-    greedy = np.ones((len(axis2), len(populations))) * 4.395081
+    greedy = np.ones((len(axis2), len(populations))) * (5.222785 - 0.827704)
     optimum = np.ones((len(axis2), len(populations))) * 4.208206
 
     rewards, times = datapoints
@@ -32,7 +31,13 @@ def create_surface_plot(datapoints, populations=(80, 120, 160, 200), generations
                           # go.Surface(z=optimum, x=populations, y=axis2, colorscale=[[0, 'green'], [1, 'green']],
                           #            opacity=0.5),
                           go.Surface(z=rewards, x=populations, y=axis2, surfacecolor=times, colorscale='viridis',
-                                     reversescale=True)])
+                                     reversescale=True)
+                          ])
+    fig.update_layout(scene=dict(
+        xaxis_title='Population size',
+        yaxis_title='Generations',
+        zaxis_title='Score',
+        yaxis_type='log'))
     fig.show()
 
 
@@ -43,6 +48,7 @@ def main():
     parser.add_argument("--results", type=str, help="", default="GS-claAGAs4TG6vpaKWslQELg.json")
     parser.add_argument("--solve", type=bool, help="", default=False)
     args = parser.parse_args()
+    # args = parser.parse_args(['--results GS-GVeCUHSIRJGfhz0lHlwcvw.json'])
     if args.solve:
         problem = JFAGA.pg.loadProblem(args.problem)
         datapoints = collect_datapoints(problem, generations=400, populations=[40, 80, 160, 240])
