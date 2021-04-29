@@ -92,7 +92,7 @@ def wta_ga_solver(values, p, weapons=None, population_size=256, crossover_probab
     assignment_matrix = np.zeros((num_weapon_types, num_targets))
     for i in range(len(best)):
         assignment_matrix[i][best[i]] = 1
-    return best.fitness.values[0], assignment_matrix
+    return total_value - best.fitness.values[0], assignment_matrix
 
 
 if __name__ == "__main__":

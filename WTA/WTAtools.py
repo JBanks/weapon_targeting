@@ -1,5 +1,6 @@
 import WTAOR
 import WTAGA
+import WTAGreedy
 import numpy as np
 import json
 import secrets
@@ -7,6 +8,7 @@ import os
 import time
 import csv
 import argparse
+from functools import partial
 
 TOKEN_LENGTH = 5
 
@@ -44,47 +46,59 @@ def safe_filename(size_str, json_prefix):
 
 
 def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, csv_filename=time.time(),
-                     json_prefix="train", json_name_offset=0):
-    solvers = [{'name': "Genetic Algorithm", 'function': WTAGA.wta_ga_solver, 'solve': True},
-               {'name': "OR-Tools", 'function': WTAOR.wta_or_solver, 'solve': True}]
+                     problem_set="train", offset=0, directory=None):
+    solvers = [{'name': "Greedy", 'function': WTAGreedy.wta_greedy_solver, 'solve': True},
+               {'name': "Genetic Algorithm",
+                'function': partial(WTAGA.wta_ga_solver, population_size=256, generations_qty=15000),
+                'solve': True},
+               {'name': "OR-Tools", 'function': WTAOR.wta_or_solver, 'solve': False}]
 
     size_str = f"{weapons}x{targets}"
+    if directory is None:
+        directory = f"{problem_set}_{size_str}"
     try:
-        os.mkdir(size_str)
-    except:
+        os.mkdir(directory)
+    except Exception as error:
         pass
     csv_content = []
     csv_row = ["filename", "total reward"]
     for solver in solvers:
         if solver['solve']:
             csv_row.append(solver['name'])
-            csv_row.append("solution")
+    csv_row.append("solution")
     csv_content.append(csv_row)
-    for i in range(quantity):
+    for i in range(offset, quantity + offset):
         try:
-            problem = new_problem(weapons, targets)
-            filename = safe_filename(size_str, json_prefix)
-            save_problem(problem, os.path.join(size_str, filename))
+            identifier = f"{problem_set}_{i:05d}_{weapons}x{targets}"
+            filename = identifier + ".json"
+            filepath = os.path.join(directory, filename)
+            if os.path.exists(filepath):
+                problem = load_problem(filepath)
+            else:
+                problem = new_problem(weapons, targets)
+                save_problem(problem, filepath)
 
             rewards_available = sum(problem['values'])
+            log(f"Scenario {filename[:-5]} with {rewards_available} rewards")
 
             if solve_problems:
                 csv_row = [filename, rewards_available]
                 start_time = time.time()
+                solution = []
                 for solver in solvers:
                     if solver['solve']:
                         g, solution = solver['function'](problem['values'], problem['p'])
                         csv_row.append(g)
-                        csv_row.append(solution)
                 end_time = time.time()
+                csv_row.append(solution)
                 csv_content.append(csv_row)
                 log(f"Solved {i + 1}/{quantity}: {filename} in: {end_time - start_time:.6f}s")
         except KeyboardInterrupt:
             input("Press Enter to attempt again, or ctrl+c to quit.")
     print()
     if solve_problems:
-        csv_filename = os.path.join(size_str, f'{csv_filename}.csv')
-        with open(csv_filename, 'wb') as f:
+        csv_filename = os.path.join(directory, f'{csv_filename}.csv')
+        with open(csv_filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerows(csv_content)
         log(f"solutions exported to {csv_filename}")
