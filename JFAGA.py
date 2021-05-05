@@ -1,14 +1,25 @@
+import functools
 import random
 import argparse
 from deap import base
 from deap import creator
 from deap import tools
-from scoop import futures
+# from scoop import futures
 import SampleSimulator as Sim
 import JFAFeatures as jf
 import ProblemGenerators as pg
 import copy
 import time
+
+
+def memoize(f):
+    memo = {}
+
+    def helper(x):
+        if x not in memo:
+            memo[x] = f(x)
+        return memo[x]
+    return helper
 
 
 def jfa_remove_inaccessible_actions(problem, actions):
@@ -55,17 +66,41 @@ def jfa_ga_explorer(problem, population_size=40, generations_qty=5000, crossover
                     opportunities.append((eff_index, tar_index))
     num_opportunities = len(opportunities)
 
+    path_state = {}
+
+    # @functools.lru_cache(maxsize=40000)
+    # def state_lookup(path):
+    #     state, reward, terminal = state_lookup(path[:-1])
+    #     state, reward, terminal = env.update_state(opportunities[chromosome[opportunity]], state)
+    #     return state, reward, terminal
+
+    memo = {}
+    calls_saved = 0
+
     def evaluate_with_indices(chromosome):
+        path_so_far = []
         state = copy.deepcopy(problem)
+        nonlocal calls_saved
         achieved_reward = 0
         terminal = False
+        exhausted_after = 0
         for opportunity in chromosome:
             try:
-                state, reward, terminal = env.update_state(opportunities[chromosome[opportunity]], state)
+                if not exhausted_after:
+                    path_so_far.append(opportunity)
+                    if str(path_so_far) in memo:
+                        state, achieved_reward, terminal = memo[str(path_so_far)]
+                        state = copy.deepcopy(state)
+                        calls_saved += 1
+                        continue
+                exhausted_after = len(path_so_far)
+                state, reward, terminal = env.update_state(opportunities[opportunity], state)
+
             except IndexError:  # This means that the action was not selectable, but there are still available actions.
                 #  print(f"Error taking action {opportunities[chromosome[opportunity]]}")
                 continue
             achieved_reward += reward
+            memo[str(path_so_far)] = state, achieved_reward, terminal
             if terminal:
                 break
         if not terminal:
@@ -141,9 +176,9 @@ def jfa_ga_explorer(problem, population_size=40, generations_qty=5000, crossover
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--problem', type=str, help="The filename of the problem json you would like to load",
-                        default='4x10\\GVeCUHSIRJGfhz0lHlwcvw.json')
+                        default='4x10\\4x10-0051.json')
     parser.add_argument('--population', type=int, help="The size of the population for each generation", default=240)
-    parser.add_argument('--generations', type=int, help="The number of generations to evaluate for", default=400)
+    parser.add_argument('--generations', type=int, help="The number of generations to evaluate for", default=5000)
     args = parser.parse_args()
 
     scenario = pg.loadProblem(args.problem)
