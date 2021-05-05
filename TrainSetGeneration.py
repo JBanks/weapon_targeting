@@ -20,18 +20,18 @@ def log(string):
 
 
 if __name__ == '__main__':
-    solvers = [{'name': "Random Choice", 'function': JS.random_solution, 'solve': True},
+    solvers = [{'name': "Random Choice", 'function': JS.random_solution, 'solve': False},
                {'name': "GA",
-                'function': partial(JG.jfa_ga_solver, population_size=240, generations_qty=400),
+                'function': partial(JG.jfa_ga_solver, population_size=240, generations_qty=15000),
                 'solve': True},
                {'name': "Greedy", 'function': JS.greedy, 'solve': True},
-               {'name': "AStar", 'function': JS.AStar, 'solve': True}]
+               {'name': "AStar", 'function': JS.AStar, 'solve': False}]
     # AStar should be the last solver so that its solution get printed
     parser = argparse.ArgumentParser()
-    parser.add_argument('--effectors', type=int, help="The number of effectors in each problem", default=4,
+    parser.add_argument('--effectors', type=int, help="The number of effectors in each problem", default=3,
                         required=False)
-    parser.add_argument('--targets', type=int, help="The number of targets in each problem", default=10, required=False)
-    parser.add_argument('--quantity', type=int, help="The number of problems of each size", default=84, required=False)
+    parser.add_argument('--targets', type=int, help="The number of targets in each problem", default=9, required=False)
+    parser.add_argument('--quantity', type=int, help="The number of problems of each size", default=100, required=False)
     parser.add_argument('--offset', type=int, help="Numbering offset for scenarios", default=0, required=False)
     parser.add_argument('--solve', type=bool, help="Whether or not we will solve the problems", default=True,
                         required=False)
@@ -41,7 +41,8 @@ if __name__ == '__main__':
     num_problems = args.quantity
     numbering_offset = args.offset
     solve_problems = args.solve
-    directory = f"{effectors}x{targets}"
+    # directory = f"{effectors}x{targets}"
+    directory = os.path.join(f"JFA Validation Datasets for DRDC Slides", f"JFA {effectors}x{targets} Validation Set")
     try:
         os.mkdir(directory)
     except Exception as error:
@@ -55,7 +56,7 @@ if __name__ == '__main__':
     csv_content.append(csv_row)
     for i in range(numbering_offset, num_problems + numbering_offset):
         try:
-            identifier = f"{effectors}x{targets}-{i:04d}"
+            identifier = f"validation_{i:05d}_{effectors}x{targets}"
             filename = identifier + ".json"
             filepath = os.path.join(directory, filename)
             if os.path.exists(filepath):
@@ -82,7 +83,7 @@ if __name__ == '__main__':
                 csv_row.append(solution)
 
                 csv_content.append(csv_row)
-                log(f"Solved {i+1}/{num_problems}: {filename} in: {end_time - start_time:.6f}s")
+                log(f"Solved {i+1}/{num_problems+numbering_offset}: {filename} in: {end_time - start_time:.6f}s")
         except KeyboardInterrupt:
             input("Press Enter to attempt again, or ctrl+c to quit.")
     print()
