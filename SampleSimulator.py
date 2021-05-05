@@ -1,33 +1,14 @@
 #!/usr/bin/env python3
 
-from enum import IntEnum, auto
 import numpy as np
 import ProblemGenerators as PG
-from ProblemGenerators import loadProblem, saveProblem
+from ProblemGenerators import loadProblem, saveProblem, euclideanDistance, returnDistance
 import JFAFeatures as JF
 import random
-import json
 import math
 import sys
 
 SPEED_CORRECTION = PG.STANDARDIZED_TIME * PG.MAX_SPEED
-
-
-def euclideanDistance(effector, task):
-    return math.sqrt((effector[JF.EffectorFeatures.XPOS] - task[JF.TaskFeatures.XPOS]) ** 2 +
-                     (effector[JF.EffectorFeatures.YPOS] - task[JF.TaskFeatures.YPOS]) ** 2)
-
-
-def returnDistance(effector, task):
-    EucDistance = Simulation.euclideanDistance(effector, task)
-    travelDistance = max(EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE], 0)
-    newX = effector[JF.EffectorFeatures.XPOS] + (
-            task[JF.TaskFeatures.XPOS] - effector[JF.EffectorFeatures.XPOS]) * travelDistance / EucDistance
-    newY = effector[JF.EffectorFeatures.YPOS] + (
-            task[JF.TaskFeatures.YPOS] - effector[JF.EffectorFeatures.YPOS]) * travelDistance / EucDistance
-    returnTrip = math.sqrt(
-        (effector[JF.EffectorFeatures.STARTX] - newX) ** 2 + (effector[JF.EffectorFeatures.STARTY] - newY) ** 2)
-    return travelDistance + returnTrip
 
 
 def printState(state):
@@ -98,23 +79,23 @@ def print_grid(state):
 
 
 class JeremyAgent:
-    def getAction(state):
+    def getAction(self, state):
         """
         Allows the user to control which action to take next by selecting an agent, and a task.
         """
         effector, task = None, None
         printState(state)
-        while effector == None:
+        while effector is None:
             try:
                 effector = int(input("effector: "))
             except ValueError:
                 pass
-        while task == None:
+        while task is None:
             try:
                 task = int(input("task: "))
             except ValueError:
                 pass
-        return (effector, task)
+        return effector, task
 
     def learn(state, action, reward, new_state, terminal):
         pass
@@ -176,20 +157,20 @@ class Simulation:
     def resetState(self, state):
         pass
 
-    def euclideanDistance(effector, task):
+    def euclidean_distance(self, effector, task):
         return math.sqrt((effector[JF.EffectorFeatures.XPOS] - task[JF.TaskFeatures.XPOS]) ** 2 + (
                 effector[JF.EffectorFeatures.YPOS] - task[JF.TaskFeatures.YPOS]) ** 2)
 
-    def returnDistance(effector, task):
-        EucDistance = Simulation.euclideanDistance(effector, task)
+    def return_distance(self, effector, task):
+        EucDistance = self.euclidean_distance(effector, task)
         travelDistance = max(EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE], 0)
-        newX = effector[JF.EffectorFeatures.XPOS] + (
+        new_x = effector[JF.EffectorFeatures.XPOS] + (
                 task[JF.TaskFeatures.XPOS] - effector[JF.EffectorFeatures.XPOS]) * travelDistance / EucDistance
-        newY = effector[JF.EffectorFeatures.YPOS] + (
+        new_y = effector[JF.EffectorFeatures.YPOS] + (
                 task[JF.TaskFeatures.YPOS] - effector[JF.EffectorFeatures.YPOS]) * travelDistance / EucDistance
-        returnTrip = math.sqrt(
-            (effector[JF.EffectorFeatures.STARTX] - newX) ** 2 + (effector[JF.EffectorFeatures.STARTY] - newY) ** 2)
-        return travelDistance + returnTrip
+        return_trip = math.sqrt(
+            (effector[JF.EffectorFeatures.STARTX] - new_x) ** 2 + (effector[JF.EffectorFeatures.STARTY] - new_y) ** 2)
+        return travelDistance + return_trip
 
     def getSchedule(self):
         """
@@ -227,7 +208,7 @@ class Simulation:
         # Make a separate stack for the schedule so that we don't need to iterate through the whole state history
         self.schedule[effectorIndex].append((taskIndex, opportunity[JF.OpportunityFeatures.TIMECOST]))
 
-        EucDistance = Simulation.euclideanDistance(effector, task)
+        EucDistance = self.euclidean_distance(effector, task)
         travelDistance = EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE]
 
         if travelDistance > 0:  # Calculate the updated position
@@ -254,10 +235,10 @@ class Simulation:
                 self.opportunityData[i][taskIndex][JF.OpportunityFeatures.PSUCCESS] = 0
 
         for i in range(0, self.nbTask):
-            EucDistance = Simulation.euclideanDistance(effector, self.taskData[i])
+            EucDistance = self.euclidean_distance(effector, self.taskData[i])
             # If it wasn't selectable before, could that change?  If not, drop this set of operations whenever something is already unfeasible
             if not effector[JF.EffectorFeatures.STATIC]:
-                RTDistance = Simulation.returnDistance(effector, self.taskData[i])
+                RTDistance = self.return_distance(effector, self.taskData[i])
                 travelDistance = max(0, EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE])
                 if (RTDistance > effector[JF.EffectorFeatures.ENERGYLEFT] / (
                         effector[JF.EffectorFeatures.ENERGYRATE]) or
@@ -271,13 +252,12 @@ class Simulation:
                     self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = travelDistance / (
                             effector[
                                 JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)  # + effector[JF.EffectorFeatures.DUTYCYCLE]
-                    self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] = travelDistance * \
-                                                                                                effector[
-                                                                                                    JF.EffectorFeatures.ENERGYRATE]  # Energy is related to fuel or essentially range
+                    self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] = \
+                        travelDistance * effector[JF.EffectorFeatures.ENERGYRATE]  # Energy is related to fuel or essentially range
             else:
                 if EucDistance <= effector[JF.EffectorFeatures.EFFECTIVEDISTANCE]:
-                    self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = EucDistance / (effector[
-                                                                                                                 JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)  # effector[JF.EffectorFeatures.DUTYCYCLE]
+                    self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = \
+                        EucDistance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)  # effector[JF.EffectorFeatures.DUTYCYCLE]
                     self.opportunityData[effectorIndex][i][
                         JF.OpportunityFeatures.ENERGYCOST] = 0  # Energy is related to fuel or essentially range
                 else:
@@ -310,6 +290,8 @@ class Simulation:
         """
         if state is None:
             effectorData, taskData, opportunityData = self.effectorData, self.taskData, self.opportunityData
+            nbEffector = self.nbEffector
+            nbTask = self.nbTask
         else:
             PG.correct_effector_data(state)
             effectorData, taskData, opportunityData = unMergeState(state)
@@ -326,19 +308,17 @@ class Simulation:
         effector = effectorData[effectorIndex, :]
         task = taskData[taskIndex, :]
         opportunity = opportunityData[effectorIndex, taskIndex, :]
-        if opportunity[JF.OpportunityFeatures.SELECTABLE] == False:
+        if not opportunity[JF.OpportunityFeatures.SELECTABLE]:
             raise IndexError(f"This action is not selectable. Effector: {effectorIndex} Task: {taskIndex}")
 
-        EucDistance = Simulation.euclideanDistance(effector, task)
-        travelDistance = EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE]
+        EucDistance = self.euclidean_distance(effector, task)
+        travel_distance = EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE]
 
-        if travelDistance > 0:  # Calculate the updated position
-            effector[JF.EffectorFeatures.XPOS] += (task[JF.TaskFeatures.XPOS] - effector[
-                JF.EffectorFeatures.XPOS]) * travelDistance / EucDistance
-            effector[JF.EffectorFeatures.YPOS] += (task[JF.TaskFeatures.YPOS] - effector[
-                JF.EffectorFeatures.YPOS]) * travelDistance / EucDistance
-        else:
-            pass  # We can take action against the target from our current position
+        travel_required = travel_distance > 0  # Move the effector to an updated position if required
+        effector[JF.EffectorFeatures.XPOS] += travel_required * (task[JF.TaskFeatures.XPOS] - effector[
+            JF.EffectorFeatures.XPOS]) * travel_distance / EucDistance
+        effector[JF.EffectorFeatures.YPOS] += travel_required * (task[JF.TaskFeatures.YPOS] - effector[
+            JF.EffectorFeatures.YPOS]) * travel_distance / EucDistance
 
         effector[JF.EffectorFeatures.TIMELEFT] -= opportunity[JF.OpportunityFeatures.TIMECOST]
         effector[JF.EffectorFeatures.ENERGYLEFT] -= opportunity[JF.OpportunityFeatures.ENERGYCOST]
@@ -350,55 +330,47 @@ class Simulation:
 
         task[JF.TaskFeatures.SELECTED] += 0.5  # Count the number of engagements so far
 
-        if task[JF.TaskFeatures.SELECTED] >= 1:  # Down the road: opportunities[:,:,selectable] &= task[:,selected] >= 1
-            for i in range(0, nbEffector):
-                opportunityData[i][taskIndex][JF.OpportunityFeatures.SELECTABLE] = False
-                opportunityData[i][taskIndex][JF.OpportunityFeatures.PSUCCESS] = 0
+        # The task has been selected the maximum number of times, no other effectors can select this task.
+        opportunityData[:, taskIndex, JF.OpportunityFeatures.SELECTABLE] *= (task[JF.TaskFeatures.SELECTED] < 1)
+        opportunityData[:, taskIndex, JF.OpportunityFeatures.PSUCCESS] *= \
+            opportunityData[:, taskIndex, JF.OpportunityFeatures.SELECTABLE]
 
         for i in range(0, nbTask):
-            EucDistance = Simulation.euclideanDistance(effector, taskData[i])
-            # If it wasn't selectable before, could that change?  If not, drop this set of operations whenever something is already unfeasible
-            if not effector[JF.EffectorFeatures.STATIC]:
-                RTDistance = Simulation.returnDistance(effector, taskData[i])
-                travelDistance = max(0, EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE])
-                if (RTDistance > effector[JF.EffectorFeatures.ENERGYLEFT] / (
-                        effector[JF.EffectorFeatures.ENERGYRATE]) or
-                        effector[JF.EffectorFeatures.TIMELEFT] < RTDistance / (
-                                effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)):
-                    # print(f"Return Distance too far: {RTDistance} > {effector[JF.EffectorFeatures.ENERGYLEFT]} / {(effector[JF.EffectorFeatures.ENERGYRATE])} or ")
-                    # print(f"{effector[JF.EffectorFeatures.TIMELEFT]} < {RTDistance} / {(effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)}")
-                    opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
-                else:
-                    opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = travelDistance / (effector[
-                                                                                                               JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)  # + effector[JF.EffectorFeatures.DUTYCYCLE]
-                    opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] = travelDistance * effector[
-                        JF.EffectorFeatures.ENERGYRATE]  # Energy is related to fuel or essentially range
-            else:
-                if EucDistance <= effector[JF.EffectorFeatures.EFFECTIVEDISTANCE]:
-                    opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = EucDistance / (effector[
-                                                                                                            JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)  # effector[JF.EffectorFeatures.DUTYCYCLE]
-                    opportunityData[effectorIndex][i][
-                        JF.OpportunityFeatures.ENERGYCOST] = 0  # Energy is related to fuel or essentially range
-                else:
-                    opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
+            if not opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE]:
+                continue
+            EucDistance = self.euclidean_distance(effector, taskData[i])
+            mobile = not effector[JF.EffectorFeatures.STATIC]
+            if mobile:
+                RTDistance = self.return_distance(effector, taskData[i])
+                travel_distance = max(0, EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE])
+                # If the effector is static, then it doesn't move and tasks don't need to be updated here
+                # If the effector is mobile, then we need to validate that the moves are still feasible
+                maintain_value = (not mobile) or (RTDistance < effector[JF.EffectorFeatures.ENERGYLEFT] /
+                                                  effector[JF.EffectorFeatures.ENERGYRATE] and
+                                                  effector[JF.EffectorFeatures.TIMELEFT] > RTDistance / (
+                                                    effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION))
+                opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] *= maintain_value
+                opportunityData[effectorIndex][i][JF.OpportunityFeatures.PSUCCESS] *= maintain_value
 
-            if opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] > effector[
-                JF.EffectorFeatures.TIMELEFT]:
-                opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
-            elif effectorData[effectorIndex][JF.EffectorFeatures.AMMORATE] > effector[JF.EffectorFeatures.AMMOLEFT]:
-                opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
-            elif opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] > effector[
-                JF.EffectorFeatures.ENERGYLEFT]:
-                opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
+                opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = \
+                    (not mobile) * opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] + \
+                    mobile * travel_distance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)
+                opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] = \
+                    (not mobile) * opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] + \
+                    mobile * travel_distance * effector[JF.EffectorFeatures.ENERGYRATE]
 
-            if opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] == False:
-                opportunityData[effectorIndex][i][JF.OpportunityFeatures.PSUCCESS] = 0
+            # If there isn't enough time, ammo, or energy, mark the opportunity as infeasible
+            feasible = opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] <= \
+                effector[JF.EffectorFeatures.TIMELEFT] and \
+                effectorData[effectorIndex][JF.EffectorFeatures.AMMORATE] <= \
+                effector[JF.EffectorFeatures.AMMOLEFT] and \
+                opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] <= \
+                effector[JF.EffectorFeatures.ENERGYLEFT]
+            opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] *= feasible
+            opportunityData[effectorIndex][i][JF.OpportunityFeatures.PSUCCESS] *= feasible
 
-        # self.opportunityData[:,:,JF.OpportunityFeatures.PSUCCESS] &= self.opportunityData[:,:,JF.OpportunityFeatures.SELECTABLE]
-        if np.sum(opportunityData[:, :, JF.OpportunityFeatures.SELECTABLE]) >= 1:
-            terminal = False
-        else:
-            terminal = True
+        # If no actions are selectable, we are in a terminal state
+        terminal = not opportunityData[:, :, JF.OpportunityFeatures.SELECTABLE].any()
 
         return self.formatState(effectorData, taskData, opportunityData), reward, terminal
 
