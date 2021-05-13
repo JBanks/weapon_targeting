@@ -46,6 +46,7 @@ def solver(quantity, directory, start_idx=0, prefix="", suffix="", digits=5, Ran
     for solver in solvers:
         if solver['solve']:
             csv_row.append(solver['name'])
+            csv_row.append(f'{csv_row[-1]} runtime')
     csv_row.append("solution")
     with open(csvfilename, 'w') as f:
         writer = csv.writer(f)
@@ -67,9 +68,10 @@ def solver(quantity, directory, start_idx=0, prefix="", suffix="", digits=5, Ran
                 if solver['solve']:
                     start_time = time.time()
                     g, solution = solver['function'](simProblem)
+                    total_time = start_time - time.time()
                     csv_row.append((rewards_available-g))
-                    end_time = time.time()
-                    print(f"Total time to solve problem {i} using {solver['name']}:\n{end_time - start_time}")
+                    csv_row.append(total_time)
+                    print(f"Total time to solve problem {i} using {solver['name']}:\n{total_time}")
 
             # record the last generated solution (should usually be from A*) in the CSV file
             # this is done at each step to avoid losing data if the solvers hangs on a problem
@@ -166,6 +168,7 @@ if __name__ == '__main__':
                             prefix = sys.argv[6]
                             suffix = sys.argv[7]
                             digits = sys.argv[8]
-
+    '''
     generate_dataset(effectors=effectors, targets=targets, quantity=quantity, solve_problem=solve_problems,
                      directory_arg=directory_arg, prefix=prefix, suffix=suffix, digits=digits)
+    '''
