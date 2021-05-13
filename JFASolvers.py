@@ -66,7 +66,7 @@ def random_solution(problem):
     env = Sim.Simulation(Sim.state_to_dict)
     state = env.reset(problem)
     node = Node(sum(state['Targets'][:, JF.TaskFeatures.VALUE]), None, state, 0)
-    while (not node.terminal):
+    while not node.terminal:
         options = np.asarray(np.where(state['Opportunities'][:, :, JF.OpportunityFeatures.PSUCCESS] > 0)).transpose()
         action_index = np.random.choice(len(options))
         action = tuple(options[action_index])
@@ -84,7 +84,7 @@ def greedy(problem):
     node = Node(sum(state['Targets'][:, JF.TaskFeatures.VALUE]), None, state, 0)
     node = greedy_rec(node, env=env)
 
-    return node.g, node.Solution()
+    return sum(state['Targets'][:, JF.TaskFeatures.VALUE]) - node.g, node.Solution()
 
 
 def greedy_rec(node, env=None):
@@ -104,14 +104,6 @@ def greedy_rec(node, env=None):
         child.Parent(node)
         return child
 
-    """
-    twice = node
-    effector, target = action
-    if state['Targets'][target][JF.TaskFeatures.SELECTED] < 1 and state['Effectors'][effector][JF.EffectorFeatures.AMMOLEFT] >= state['Effectors'][effector][JF.EffectorFeatures.AMMORATE]:
-        twice = Node(node.g - reward, action, state, reward, terminal)
-        twice.Parent(node)
-        twice = greedy_rec(twice, env)
-    """
     once = Node(node.g - reward, action, state, reward, terminal)
     once.Parent(node)
     once = greedy_rec(once, env)
@@ -171,16 +163,14 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=False):
             print(f"\rExpansions: {expansions}, Duplicates: {duplicate_states}", end="")
         if hasattr(node, 'parent'):
             if node.terminal is True:
-                #print(f"\nTerminal node pulled: g = {node.g}")
                 if node.g == node.parent.g - node.reward:
                     return node.g, node.Solution()
-                #print(f"Sending node back to heap. g: {node.g} -> {node.parent.g - node.reward}")
                 node.g = node.parent.g - node.reward
                 heapq.heappush(frontier, node)
                 continue
             node.g = node.parent.g - node.reward
-            ## This may actually not be the optimal.  There may be a more optimal node.
-            ## If the value is the same, we found it, if the value changes, put it back in the heap.
+            # This may actually not be the optimal.  There may be a more optimal node.
+            # If the value is the same, we found it, if the value changes, put it back in the heap.
         explored.append(node)
         state = node.state
         for effector, target in np.stack(
@@ -209,7 +199,7 @@ if __name__ == '__main__':
         filename = sys.argv[1]
         simProblem = PG.loadProblem(filename)
     else:
-        simProblem = PG.network_validation(4, 8)
+        simProblem = PG.network_validation(20, 200)
     print(f"Problem size: {(len(simProblem['Effectors']), len(simProblem['Targets']))}")
     Sim.printState(Sim.mergeState(simProblem['Effectors'], simProblem['Targets'], simProblem['Opportunities']))
     rewards_available = sum(simProblem['Targets'][:, JF.TaskFeatures.VALUE])
@@ -224,4 +214,5 @@ if __name__ == '__main__':
             start_time = time.time()
             g, solution = solver['function'](simProblem)
             end_time = time.time()
-            print(f"{solver['name']} solved in {end_time - start_time}s, reward left: {g} / {rewards_available}, stepd: {solution}")
+            print(f"{solver['name']} solved in {end_time - start_time}s, reward left: {g} /"
+                  f" {rewards_available}, steps: {solution}")
