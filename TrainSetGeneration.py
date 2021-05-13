@@ -4,12 +4,13 @@ import SampleSimulator as Sim
 import ProblemGenerators as PG
 import JFAFeatures as JF
 import JFASolvers as JS
+import JFAGA as JG
 import numpy as np
 import time
 import csv
-import sys
 import os
-import secrets
+import argparse
+from functools import partial
 
 TOKEN_LENGTH = 5
 
@@ -19,27 +20,33 @@ def log(string):
 
 
 if __name__ == '__main__':
-    effectors = 4
-    targets = 8
-    quantity = 100
-    solve_problems = True
-    solvers = [{'name': "Random Choice", 'function': JS.random_solution, 'solve': True},
+    solvers = [{'name': "Random Choice", 'function': JS.random_solution, 'solve': False},
+               {'name': "GA",
+                'function': partial(JG.jfa_ga_solver, population_size=240, generations_qty=15000),
+                'solve': True},
                {'name': "Greedy", 'function': JS.greedy, 'solve': True},
-               {'name': "AStar", 'function': JS.AStar, 'solve': True}]  # AStar should be the last so that its
-    # solution get printed
-    if len(sys.argv) > 2:
-        effectors = int(sys.argv[1])
-        targets = int(sys.argv[2])
-        if len(sys.argv) > 3:
-            quantity = int(sys.argv[3])
-            if len(sys.argv) > 4:
-                if int(sys.argv[4]) == 0:
-                    solve_problems = False
-    directory = f"{effectors}x{targets}"
+               {'name': "AStar", 'function': JS.AStar, 'solve': False}]
+    # AStar should be the last solver so that its solution get printed
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--effectors', type=int, help="The number of effectors in each problem", default=3,
+                        required=False)
+    parser.add_argument('--targets', type=int, help="The number of targets in each problem", default=9, required=False)
+    parser.add_argument('--quantity', type=int, help="The number of problems of each size", default=100, required=False)
+    parser.add_argument('--offset', type=int, help="Numbering offset for scenarios", default=0, required=False)
+    parser.add_argument('--solve', type=bool, help="Whether or not we will solve the problems", default=True,
+                        required=False)
+    args = parser.parse_args()
+    effectors = args.effectors
+    targets = args.targets
+    num_problems = args.quantity
+    numbering_offset = args.offset
+    solve_problems = args.solve
+    # directory = f"{effectors}x{targets}"
+    directory = os.path.join(f"JFA Validation Datasets for DRDC Slides", f"JFA {effectors}x{targets} Validation Set")
     try:
         os.mkdir(directory)
-    except:
-        pass
+    except Exception as error:
+        print(f"Error: {error}")
     csv_content = []
     csv_row = ["filename", "total reward"]
     for solver in solvers:
@@ -47,13 +54,18 @@ if __name__ == '__main__':
             csv_row.append(solver['name'])
     csv_row.append("solution")
     csv_content.append(csv_row)
-    for i in range(quantity):
+    for i in range(numbering_offset, num_problems + numbering_offset):
         try:
-            filename = secrets.token_urlsafe(TOKEN_LENGTH) + ".json"
-            simProblem = PG.network_validation(effectors, targets)
-            while (np.sum(simProblem['Opportunities'][:,:,JF.OpportunityFeatures.SELECTABLE]) < 1):
+            identifier = f"validation_{i:05d}_{effectors}x{targets}"
+            filename = identifier + ".json"
+            filepath = os.path.join(directory, filename)
+            if os.path.exists(filepath):
+                simProblem = Sim.loadProblem(filepath)
+            else:
                 simProblem = PG.network_validation(effectors, targets)
-            Sim.saveProblem(simProblem, os.path.join(directory, filename))
+                while np.sum(simProblem['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE]) < 1:
+                    simProblem = PG.network_validation(effectors, targets)
+                Sim.saveProblem(simProblem, filepath)
 
             rewards_available = sum(simProblem['Targets'][:, JF.TaskFeatures.VALUE])
             selectable_opportunities = np.sum(simProblem['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE])
@@ -62,6 +74,7 @@ if __name__ == '__main__':
             if solve_problems:
                 csv_row = [filename, rewards_available]
                 start_time = time.time()
+                solution = []
                 for solver in solvers:
                     if solver['solve']:
                         g, solution = solver['function'](simProblem)
@@ -70,14 +83,14 @@ if __name__ == '__main__':
                 csv_row.append(solution)
 
                 csv_content.append(csv_row)
-                log(f"Solved {i+1}/{quantity}: {filename} in: {end_time - start_time:.6f}s")
+                log(f"Solved {i+1}/{num_problems+numbering_offset}: {filename} in: {end_time - start_time:.6f}s")
         except KeyboardInterrupt:
             input("Press Enter to attempt again, or ctrl+c to quit.")
     print()
 
     if solve_problems:
-        csvfilename = os.path.join(directory, f'{time.time()}.csv')
-        with open(csvfilename, 'w') as f:
+        csv_filename = os.path.join(directory, f'{time.time()}.csv')
+        with open(csv_filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerows(csv_content)
-        log(f"solutions exported to {csvfilename}")
+        log(f"solutions exported to {csv_filename}")
