@@ -2,7 +2,7 @@ import numpy as np
 import json
 import random
 import math
-from . import JFAFeatures as JF
+import JFAFeatures as JF
 
 MAX_SPEED = 6000
 MIN_RANGE = 10  # Assume that scale will be greater than 10 and less than 1000

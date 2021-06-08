@@ -183,6 +183,12 @@ class Simulation:
         # Effector 3 first hits target 1
         return self.schedule
 
+    def getState(self):
+        """
+        Returns a numpy-formatted version of the current problem state for DBA use
+        """
+        return (self.formatState(self.effectorData, self.taskData, self.opportunityData))
+
     def update(self, action):
         """
         Take an action from an agent and apply that action to the effector specified.
@@ -398,7 +404,8 @@ def mergeState(effectorData, taskData, opportunityData):
     effectors += effectorData
     tasks += taskData
     effectors = effectors.transpose([1, 0, 2])  # Transpose from m.n.p to n.m.p
-    return np.concatenate((effectors, tasks, opportunityData), axis=2)  # concatenate on the 3rd axis
+    # TODO: SALGO maybe need to reorder the dimensions (either here or in jfaf)
+    return np.concatenate((effectors, tasks, opportunityData), axis=2).transpose((2, 0, 1))  # concatenate on the 3rd axis
 
 
 def state_to_dict(effectorData, taskData, opportunityData):
@@ -415,6 +422,7 @@ def unMergeState(state):
         taskData = state['Targets']
         opportunityData = state['Opportunities']
     else:
+        state = state.transpose((1, 2, 0))
         effectorData = state[:, 0, :len(JF.EffectorFeatures)]
         taskData = state[0, :, len(JF.EffectorFeatures):len(JF.EffectorFeatures) + len(JF.TaskFeatures)]
         opportunityData = state[:, :, len(JF.EffectorFeatures) + len(JF.TaskFeatures):]
