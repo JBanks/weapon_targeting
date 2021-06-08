@@ -187,7 +187,7 @@ class Simulation:
         """
         Returns a numpy-formatted version of the current problem state for DBA use
         """
-        return (self.formatState(self.effectorData, self.taskData, self.opportunityData))
+        return self.formatState(self.effectorData, self.taskData, self.opportunityData)
 
     def update(self, action):
         """
