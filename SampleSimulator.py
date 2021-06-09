@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import ProblemGenerators as PG
-from ProblemGenerators import loadProblem, saveProblem, euclideanDistance, returnDistance
-import JFAFeatures as JF
+from . import ProblemGenerators as PG
+from .ProblemGenerators import loadProblem, saveProblem, euclideanDistance, returnDistance
+from . import JFAFeatures as JF
 import random
 import math
 import sys
