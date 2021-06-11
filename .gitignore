@@ -148,3 +148,8 @@ WTA/GS_4x4.xlsx
 WTA/GS_5x5.xlsx
 WTA/GS_7x7.xlsx
 /JFA Validation Datasets for DRDC Slides/*
+/pypy3/*
+/WTA/validation_20x20/*
+/WTA/validation_15x15/
+/WTA/validation_10x10/
+/WTA/validation_4x4/
