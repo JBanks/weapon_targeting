@@ -8,8 +8,8 @@ def wta_greedy_solver(values, p, weapons=None):
     for i in range(len(weapons)):
         for j in range(weapons[i]):
             adjusted_p.append(p[i])
-    p = np.asarray(adjusted_p.copy())
-    v = np.asarray(values.copy())
+    p = np.asarray(adjusted_p.copy(), dtype=float)
+    v = np.asarray(values.copy(), dtype=float)
     assignment_matrix = np.zeros(p.shape)
     while (p > 0).any():
         assignment = np.unravel_index(np.argmax(p * v), p.shape)
