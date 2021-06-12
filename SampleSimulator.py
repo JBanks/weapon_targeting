@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import ProblemGenerators as PG
-from ProblemGenerators import loadProblem, saveProblem, euclideanDistance, returnDistance
-import JFAFeatures as JF
+
+if __package__ is not None and len(__package__) > 0:
+    print(f"{__name__} using relative import inside of {__package__}")
+    from . import JFAFeatures as JF
+    from . import ProblemGenerators as PG
+    from .ProblemGenerators import loadProblem, saveProblem, euclideanDistance, returnDistance
+else:
+    import JFAFeatures as JF
+    import ProblemGenerators as PG
+    from ProblemGenerators import loadProblem, saveProblem, euclideanDistance, returnDistance
 import random
 import math
 import sys
@@ -398,7 +405,7 @@ def mergeState(effectorData, taskData, opportunityData):
     effectors += effectorData
     tasks += taskData
     effectors = effectors.transpose([1, 0, 2])  # Transpose from m.n.p to n.m.p
-    return np.concatenate((effectors, tasks, opportunityData), axis=2)  # concatenate on the 3rd axis
+    return np.concatenate((effectors, tasks, opportunityData), axis=2).transpose((2, 0, 1))  # concatenate on the 3rd axis
 
 
 def state_to_dict(effectorData, taskData, opportunityData):

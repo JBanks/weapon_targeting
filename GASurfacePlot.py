@@ -1,4 +1,9 @@
-import JFAGA
+
+if __package__ is not None and len(__package__) > 0:
+    print(f"{__name__} using relative import inside of {__package__}")
+    from . import JFAGA
+else:
+    import JFAGA
 import argparse
 import plotly.graph_objects as go
 import numpy as np

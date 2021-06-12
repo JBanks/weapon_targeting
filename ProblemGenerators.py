@@ -2,7 +2,12 @@ import numpy as np
 import json
 import random
 import math
-import JFAFeatures as JF
+
+if __package__ is not None and len(__package__) > 0:
+    print(f"{__name__} using relative import inside of {__package__}")
+    from . import JFAFeatures as JF
+else:
+    import JFAFeatures as JF
 
 MAX_SPEED = 6000
 MIN_RANGE = 10  # Assume that scale will be greater than 10 and less than 1000
@@ -22,6 +27,11 @@ def correct_effector_data(problem):
     if problem['Effectors'].shape[1] == 12:
         extension = np.zeros((len(problem['Effectors']), len(JF.EffectorFeatures) - problem['Effectors'].shape[1]))
         problem['Effectors'] = np.append(problem['Effectors'], extension, axis=1)
+
+
+def truncate_effector_data(problem):
+    if problem['Effectors'].shape[1] == 18:
+        problem['Effectors'] = problem['Effectors'][:, 0:12]
 
 
 def loadProblem(filename):

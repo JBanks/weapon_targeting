@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-
-import ProblemGenerators as PG
-import JFAFeatures as JF
+if __package__ is not None and len(__package__) > 0:
+    print(f"{__name__} using relative import inside of {__package__}")
+    from . import JFAFeatures as JF
+    from . import ProblemGenerators as PG
+else:
+    import JFAFeatures as JF
+    import ProblemGenerators as PG
 
 
 def printProblem(problem, arena=False):

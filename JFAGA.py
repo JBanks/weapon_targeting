@@ -5,9 +5,15 @@ from deap import base
 from deap import creator
 from deap import tools
 # from scoop import futures
-import SampleSimulator as Sim
-import JFAFeatures as jf
-import ProblemGenerators as pg
+if __package__ is not None and len(__package__) > 0:
+    print(f"{__name__} using relative import inside of {__package__}")
+    from . import SampleSimulator as Sim
+    from . import JFAFeatures as jf
+    from . import ProblemGenerators as pg
+else:
+    import SampleSimulator as Sim
+    import JFAFeatures as jf
+    import ProblemGenerators as pg
 import copy
 import time
 

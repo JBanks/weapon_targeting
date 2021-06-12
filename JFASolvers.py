@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 
 import heapq
-import SampleSimulator as Sim
-import ProblemGenerators as PG
-import JFAFeatures as JF
+if __package__ is not None and len(__package__) > 0:
+    print(f"{__name__} using relative import inside of {__package__}")
+    from . import SampleSimulator as Sim
+    from . import JFAFeatures as JF
+    from . import ProblemGenerators as PG
+else:
+    import SampleSimulator as Sim
+    import JFAFeatures as JF
+    import ProblemGenerators as PG
 import numpy as np
 import copy
 import time
@@ -55,7 +61,7 @@ class Node:
 
     def Parent(self, parent):
         self.parent = parent
-        self.solution = self.parent.Solution().copy()
+        self.solution = self.parent.solution().copy()
         self.solution.append(list(self.action))
 
     def Solution(self):
@@ -164,7 +170,7 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=False):
         if hasattr(node, 'parent'):
             if node.terminal is True:
                 if node.g == node.parent.g - node.reward:
-                    return node.g, node.Solution()
+                    return node.g, node.solution()
                 node.g = node.parent.g - node.reward
                 heapq.heappush(frontier, node)
                 continue

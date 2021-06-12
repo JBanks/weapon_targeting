@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 
-import SampleSimulator as Sim
-import ProblemGenerators as PG
-import JFAFeatures as JF
-import JFASolvers as JS
-import JFAGA as JG
+if __package__ is not None and len(__package__) > 0:
+    print(f"{__name__} using relative import inside of {__package__}")
+    from . import SampleSimulator as Sim
+    from . import JFAFeatures as JF
+    from . import ProblemGenerators as PG
+    from . import JFASolvers as JS
+    from . import JFAGA as JG
+else:
+    import SampleSimulator as Sim
+    import JFAFeatures as JF
+    import ProblemGenerators as PG
+    import JFASolvers as JS
+    import JFAGA as JG
 import numpy as np
 import time
 import csv
