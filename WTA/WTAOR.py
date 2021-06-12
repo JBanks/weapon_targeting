@@ -19,7 +19,7 @@ def wta_or_solver(values, p, weapons=None):
     model = cp_model.CpModel()
     growth_factor = 10_000
 
-    values = [value * growth_factor for value in values]
+    values = [int(value * growth_factor) for value in values]
 
     num_weapon_types = len(weapons)
     num_targets = len(values)
@@ -38,9 +38,9 @@ def wta_or_solver(values, p, weapons=None):
     rem_vals = {}
     large_rem_vals = {}
     for j in range(num_targets):
-        rem_vals[j] = model.NewIntVar(0, values[j] * 10000, f'target[{j}]: {var}')
+        rem_vals[j] = model.NewIntVar(0, values[j] * growth_factor, f'target[{j}]: {var}')
         var += 1
-        large_rem_vals[j] = model.NewIntVar(0, values[j] * 10000, f'large_target[{j}]: {var}')
+        large_rem_vals[j] = model.NewIntVar(0, values[j] * growth_factor, f'large_target[{j}]: {var}')
         var += 1
 
     # b[(i,j,k)] is a boolean for if a given weapon qty is associated with a given target
@@ -50,14 +50,14 @@ def wta_or_solver(values, p, weapons=None):
     cm = {}  # Corrected Multiplication
     for i in range(num_weapon_types):
         for j in range(num_targets):
-            cm[(i, j)] = model.NewIntVar(0, values[j] * 10000, f'cm[{i,j}]: {var}')
+            cm[(i, j)] = model.NewIntVar(0, values[j] * growth_factor, f'cm[{i,j}]: {var}')
             var += 1
             for k in range(weapons[i] + 1):
                 b[(i, j, k)] = model.NewBoolVar(f'b[{(i,j,k)}]: {var}')
                 var += 1
                 # Multiply by their boolean values, then take the max equality, then take the product of the return
                 # from the maxes.
-                m[(i, j, k)] = model.NewIntVar(0, values[j] * 10000, f'm[{i,j,k}]: {var}')
+                m[(i, j, k)] = model.NewIntVar(0, values[j] * growth_factor, f'm[{i,j,k}]: {var}')
                 var += 1
                 model.AddMultiplicationEquality(m[(i, j, k)], [q[(i, j, k)], b[(i, j, k)]])
 
@@ -69,9 +69,9 @@ def wta_or_solver(values, p, weapons=None):
     c_running = {}
     for j in range(num_targets):
         for i in range(num_weapon_types):
-            running[(i, j)] = model.NewIntVar(0, values[j] * 10000, f'running[{i,j}]: {var}')
+            running[(i, j)] = model.NewIntVar(0, values[j] * growth_factor, f'running[{i,j}]: {var}')
             var += 1
-            c_running[(i, j)] = model.NewIntVar(0, values[j] * 10000, f'c_running[{i,j}]: {var}')
+            c_running[(i, j)] = model.NewIntVar(0, values[j] * growth_factor, f'c_running[{i,j}]: {var}')
             var += 1
             if i == 0:
                 model.Add(c_running[(i, j)] == cm[(i, j)])
