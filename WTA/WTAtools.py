@@ -1,6 +1,17 @@
-import WTAOR
-import WTAGA
-import WTAGreedy
+if __package__ is not None and len(__package__) > 0:
+    print(f"{__name__} using relative import inside of {__package__}")
+    from . import WTAOR
+    from . import WTAGA
+    from . import WTAGreedy
+    from . import WTABB
+    from . import WTAAStar
+else:
+    import WTAOR
+    import WTAGA
+    import WTAGreedy
+    import WTABB
+    import WTAAStar
+
 import numpy as np
 import json
 import secrets
@@ -36,7 +47,7 @@ def load_problem(filename):
 
 def new_problem(weapons=5, targets=5):
     p = np.random.uniform(0.6, 0.9, (weapons, targets))  # uniform between 0.6 and 0.9
-    values = np.random.randint(25, 100, targets, dtype=int).tolist()  # uniform between 25 and 100
+    values = np.random.randint(25, 100, targets).astype(np.float).tolist()  # uniform between 25 and 100
     return {"values": values, "p": p}
 
 
@@ -46,11 +57,13 @@ def safe_filename(size_str, json_prefix):
 
 
 def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, csv_filename=time.time(),
-                     problem_set="train", offset=0, directory=None):
+                     problem_set="train", offset=0, directory=None, save=True):
     solvers = [{'name': "Greedy", 'function': WTAGreedy.wta_greedy_solver, 'solve': True},
                {'name': "Genetic Algorithm",
                 'function': partial(WTAGA.wta_ga_solver, population_size=256, generations_qty=15000),
-                'solve': True},
+                'solve': False},
+               {'name': "Branch and Bound", 'function': WTABB.wta_branch_bound_solver, 'solve': True},
+               {'name': "A*", 'function': WTAAStar.wta_astar_solver, 'solve': False},
                {'name': "OR-Tools", 'function': WTAOR.wta_or_solver, 'solve': False}]
 
     size_str = f"{weapons}x{targets}"
@@ -65,6 +78,7 @@ def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, cs
     for solver in solvers:
         if solver['solve']:
             csv_row.append(solver['name'])
+            csv_row.append("time")
     csv_row.append("solution")
     csv_content.append(csv_row)
     for i in range(offset, quantity + offset):
@@ -85,10 +99,15 @@ def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, cs
                 csv_row = [filename, rewards_available]
                 start_time = time.time()
                 solution = []
+                recent_time = start_time
                 for solver in solvers:
                     if solver['solve']:
                         g, solution = solver['function'](problem['values'], problem['p'])
+                        log(f"solution for {solver['name']}: {np.argmax(solution, axis=1)}: {g}")
                         csv_row.append(g)
+                        current_time = time.time()
+                        csv_row.append(f"{current_time - recent_time:.6f}s")
+                        recent_time = current_time
                 end_time = time.time()
                 csv_row.append(solution)
                 csv_content.append(csv_row)
@@ -96,7 +115,7 @@ def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, cs
         except KeyboardInterrupt:
             input("Press Enter to attempt again, or ctrl+c to quit.")
     print()
-    if solve_problems:
+    if solve_problems and save:
         csv_filename = os.path.join(directory, f'{csv_filename}.csv')
         with open(csv_filename, 'w') as f:
             writer = csv.writer(f)

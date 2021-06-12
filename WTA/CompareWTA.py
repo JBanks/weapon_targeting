@@ -1,4 +1,8 @@
-from WTAtools import *
+if __package__ is not None and len(__package__) > 0:
+    print(f"{__name__} using relative import inside of {__package__}")
+    from .WTAtools import *
+else:
+    from WTAtools import *
 import time
 import sys
 
