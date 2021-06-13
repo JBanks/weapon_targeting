@@ -50,7 +50,7 @@ if __name__ == '__main__':
     numbering_offset = args.offset
     solve_problems = args.solve
     # directory = f"{effectors}x{targets}"
-    directory = os.path.join(f"JFA Validation Datasets for DRDC Slides", f"JFA {effectors}x{targets} Validation Set")
+    directory = os.path.join(f"../JFA Validation Datasets for DRDC Slides", f"JFA {effectors}x{targets} Validation Set")
     try:
         os.mkdir(directory)
     except Exception as error:
