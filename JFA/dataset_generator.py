@@ -84,6 +84,67 @@ def solver(quantity, directory, start_idx=0, prefix="", suffix="", digits=5, Ran
             input("Press Enter to attempt again, or ctrl+c to quit.")
 
 
+def generate_dataset(effectors, targets, quantity, solve_problems=False, directory_arg=None, prefix="", suffix="", digits=5):
+    """
+    Generates a dataset in a given directory with given parameters
+    """
+    solvers = [{'name': "Random Choice", 'function': JS.random_solution, 'solve': True},
+               {'name': "Greedy", 'function': JS.greedy, 'solve': True},
+               {'name': "AStar", 'function': JS.AStar, 'solve': True}] #AStar should be the last so that its solution get printed
+
+    #set up the appropriate directory to use
+    if directory_arg is not None:
+        directory = directory_arg
+    else:
+        directory = f"{effectors}x{targets}"
+    try:
+        os.mkdir(directory)
+    except:
+        pass
+
+    csv_content = []
+    csv_row = ["filename", "total reward"]
+    for solver in solvers:
+        if solver['solve']:
+            csv_row.append(solver['name'])
+    csv_row.append("solution")
+
+    for i in range(quantity):
+        try:
+            filename = prefix + str(i).zfill(digits) + suffix + ".json"
+            simProblem = pg.network_validation(effectors, targets)
+            while (np.sum(simProblem['Opportunities'][:,:,jf.OpportunityFeatures.SELECTABLE]) < 1):
+                simProblem = pg.network_validation(effectors, targets)
+            sim.saveProblem(simProblem, os.path.join(directory, filename))
+
+            rewards_available = sum(simProblem['Targets'][:, jf.TaskFeatures.VALUE])
+            selectable_opportunities = np.sum(simProblem['Opportunities'][:, :, jf.OpportunityFeatures.SELECTABLE])
+            log(f"Scenario {filename[:-5]} with {selectable_opportunities} selectable opportunities")
+
+            if solve_problems:
+                csv_row = [filename, rewards_available]
+                start_time = time.time()
+                for solver in solvers:
+                    if solver['solve']:
+                        g, solution = solver['function'](simProblem)
+                        csv_row.append(g)
+                end_time = time.time()
+                csv_row.append(solution)
+
+                csv_content.append(csv_row)
+                log(f"Solved {i+1}/{quantity}: {filename} in: {end_time - start_time:.6f}s")
+        except KeyboardInterrupt:
+            input("Press Enter to attempt again, or ctrl+c to quit.")
+    print()
+
+    if solve_problems:
+        csvfilename = os.path.join(directory, f'{time.time()}.csv')
+        with open(csvfilename, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerows(csv_content)
+        log(f"solutions exported to {csvfilename}")
+
+
 def log(string):
     print(f"[{time.asctime()}] {string}")
 
