@@ -4,18 +4,18 @@ import numpy as np
 
 if __package__ is not None and len(__package__) > 0:
     print(f"{__name__} using relative import inside of {__package__}")
-    from . import JFAFeatures as JF
-    from . import ProblemGenerators as PG
-    from .ProblemGenerators import loadProblem, saveProblem, euclideanDistance, returnDistance
+    from . import features as jf
+    from . import problem_generators as pg
+    from .problem_generators import loadProblem, saveProblem, euclideanDistance, returnDistance
 else:
-    import JFAFeatures as JF
-    import ProblemGenerators as PG
-    from ProblemGenerators import loadProblem, saveProblem, euclideanDistance, returnDistance
+    import features as jf
+    import problem_generators as pg
+    from problem_generators import loadProblem, saveProblem, euclideanDistance, returnDistance
 import random
 import math
 import sys
 
-SPEED_CORRECTION = PG.STANDARDIZED_TIME * PG.MAX_SPEED
+SPEED_CORRECTION = pg.STANDARDIZED_TIME * pg.MAX_SPEED
 
 
 def printState(state):
@@ -24,37 +24,37 @@ def printState(state):
     nbEffector = len(state[:, 0, 0])
     for i in range(0, nbEffector):
         print("Effector:", end="")
-        print(f"({state[i, 0, JF.EffectorFeatures.XPOS]:.4f}, {state[i, 0, JF.EffectorFeatures.YPOS]:.4f})", end="")
-        print(f"\t{trueFalseStrings[int(state[i, 0, JF.EffectorFeatures.STATIC])]}", end="")
-        print(f"\t{state[i, 0, JF.EffectorFeatures.SPEED]:4.4f}", end="")
-        print(f"\t{state[i, 0, JF.EffectorFeatures.AMMOLEFT]:.4f}", end="")
-        print(f"\t{state[i, 0, JF.EffectorFeatures.ENERGYLEFT]:.4f}", end="")
-        print(f"\t{state[i, 0, JF.EffectorFeatures.TIMELEFT]:.4f}", end="")
-        print(f"\t{state[i, 0, JF.EffectorFeatures.EFFECTIVEDISTANCE]:.4f}", end="")
-        print(f"\t{state[i, 0, JF.EffectorFeatures.AMMORATE]:.4f}", end="")
-        print(f"\t{state[i, 0, JF.EffectorFeatures.ENERGYRATE]:.4f}")
+        print(f"({state[i, 0, jf.EffectorFeatures.XPOS]:.4f}, {state[i, 0, jf.EffectorFeatures.YPOS]:.4f})", end="")
+        print(f"\t{trueFalseStrings[int(state[i, 0, jf.EffectorFeatures.STATIC])]}", end="")
+        print(f"\t{state[i, 0, jf.EffectorFeatures.SPEED]:4.4f}", end="")
+        print(f"\t{state[i, 0, jf.EffectorFeatures.AMMOLEFT]:.4f}", end="")
+        print(f"\t{state[i, 0, jf.EffectorFeatures.ENERGYLEFT]:.4f}", end="")
+        print(f"\t{state[i, 0, jf.EffectorFeatures.TIMELEFT]:.4f}", end="")
+        print(f"\t{state[i, 0, jf.EffectorFeatures.EFFECTIVEDISTANCE]:.4f}", end="")
+        print(f"\t{state[i, 0, jf.EffectorFeatures.AMMORATE]:.4f}", end="")
+        print(f"\t{state[i, 0, jf.EffectorFeatures.ENERGYRATE]:.4f}")
     nbTask = len(state[0, :, 0])
-    pad = len(JF.EffectorFeatures)
+    pad = len(jf.EffectorFeatures)
     print("\n\n\t(x, y)\t\t\tValue\tSelected")
     for i in range(len(state[0, :, 0])):
-        print(f"Target: ({state[0, i, pad + JF.TaskFeatures.XPOS]:.4f}, {state[0, i, pad + JF.TaskFeatures.YPOS]:.4f})",
+        print(f"Target: ({state[0, i, pad + jf.TaskFeatures.XPOS]:.4f}, {state[0, i, pad + jf.TaskFeatures.YPOS]:.4f})",
               end="")
-        print(f"\t{state[0, i, pad + JF.TaskFeatures.VALUE]:.4f}", end="")
-        print(f"\t{state[0, i, pad + JF.TaskFeatures.SELECTED]}")
-    pad = len(JF.EffectorFeatures) + len(JF.TaskFeatures)
+        print(f"\t{state[0, i, pad + jf.TaskFeatures.VALUE]:.4f}", end="")
+        print(f"\t{state[0, i, pad + jf.TaskFeatures.SELECTED]}")
+    pad = len(jf.EffectorFeatures) + len(jf.TaskFeatures)
     print("\n\nAction\t\tPSucc\tEnergy\ttime\tSelectable\tEucDistance\tReturnDist")
     for i in range(nbEffector):
         for j in range(nbTask):
-            if state[i, j, pad + JF.OpportunityFeatures.SELECTABLE]:
+            if state[i, j, pad + jf.OpportunityFeatures.SELECTABLE]:
                 print(
-                    f"({i:2},{j:2}):\t{state[i, j, pad + JF.OpportunityFeatures.PSUCCESS]:.4}\t{state[i, j, pad + JF.OpportunityFeatures.ENERGYCOST]:.4f}\t{state[i, j, pad + JF.OpportunityFeatures.TIMECOST]:.4f}\t{trueFalseStrings[int(state[i, j, pad + JF.OpportunityFeatures.SELECTABLE])]}\t\t{euclideanDistance(state[i, 0, :], state[0, j, len(JF.EffectorFeatures):]):.6f}\t{returnDistance(state[i, 0, :], state[0, j, len(JF.EffectorFeatures):]):.6f}")
+                    f"({i:2},{j:2}):\t{state[i, j, pad + jf.OpportunityFeatures.PSUCCESS]:.4}\t{state[i, j, pad + jf.OpportunityFeatures.ENERGYCOST]:.4f}\t{state[i, j, pad + jf.OpportunityFeatures.TIMECOST]:.4f}\t{trueFalseStrings[int(state[i, j, pad + jf.OpportunityFeatures.SELECTABLE])]}\t\t{euclideanDistance(state[i, 0, :], state[0, j, len(jf.EffectorFeatures):]):.6f}\t{returnDistance(state[i, 0, :], state[0, j, len(jf.EffectorFeatures):]):.6f}")
 
 
 def print_grid(state):
     trueFalseStrings = ["False", "True"]
     nbEffector = len(state[:, 0, 0])
     nbTask = len(state[0, :, 0])
-    pad = len(JF.EffectorFeatures) + len(JF.TaskFeatures)
+    pad = len(jf.EffectorFeatures) + len(jf.TaskFeatures)
     print("\t", end="")
     for i in range(nbEffector):
         print(f"{i}\t\t", end="")
@@ -62,24 +62,24 @@ def print_grid(state):
     for j in range(nbTask):
         print(f"{j}\t", end="")
         for i in range(nbEffector):
-            if state[i, j, pad + JF.OpportunityFeatures.SELECTABLE]:
-                print(f"{state[i, j, pad + JF.OpportunityFeatures.PSUCCESS]:.8f}\t", end="")
+            if state[i, j, pad + jf.OpportunityFeatures.SELECTABLE]:
+                print(f"{state[i, j, pad + jf.OpportunityFeatures.PSUCCESS]:.8f}\t", end="")
             else:
                 print("-" * 8, end="")
         print()
-        print(f"{state[0, j, len(JF.EffectorFeatures) + JF.TaskFeatures.VALUE]:.3f}", end="")
+        print(f"{state[0, j, len(jf.EffectorFeatures) + jf.TaskFeatures.VALUE]:.3f}", end="")
         print("\t", end="")
         for i in range(nbEffector):
-            if state[i, j, pad + JF.OpportunityFeatures.SELECTABLE]:
-                print(f"{state[i, j, pad + JF.OpportunityFeatures.ENERGYCOST]:.8f}\t", end="")
+            if state[i, j, pad + jf.OpportunityFeatures.SELECTABLE]:
+                print(f"{state[i, j, pad + jf.OpportunityFeatures.ENERGYCOST]:.8f}\t", end="")
             else:
                 print("-" * 8, end="")
         print()
-        print(f"{state[0, j, len(JF.EffectorFeatures) + JF.TaskFeatures.SELECTED]:.1f}", end="")
+        print(f"{state[0, j, len(jf.EffectorFeatures) + jf.TaskFeatures.SELECTED]:.1f}", end="")
         print("\t", end="")
         for i in range(nbEffector):
-            if state[i, j, pad + JF.OpportunityFeatures.SELECTABLE]:
-                print(f"{state[i, j, pad + JF.OpportunityFeatures.TIMECOST]:.8f}\t", end="")
+            if state[i, j, pad + jf.OpportunityFeatures.SELECTABLE]:
+                print(f"{state[i, j, pad + jf.OpportunityFeatures.TIMECOST]:.8f}\t", end="")
             else:
                 print("-" * 8, end="")
         print("\n")
@@ -139,16 +139,16 @@ class Simulation:
         else:
             self.initialProblem = problem
         self.reward = 0
-        self.scale = problem['Arena'][JF.ArenaFeatures.SCALE]
-        self.coastline = problem['Arena'][JF.ArenaFeatures.COASTLINE]
-        self.frontline = problem['Arena'][JF.ArenaFeatures.FRONTLINE]
-        self.timeHorizon = problem['Arena'][JF.ArenaFeatures.TIMEHORIZON]
-        PG.correct_effector_data(problem)
+        self.scale = problem['Arena'][jf.ArenaFeatures.SCALE]
+        self.coastline = problem['Arena'][jf.ArenaFeatures.COASTLINE]
+        self.frontline = problem['Arena'][jf.ArenaFeatures.FRONTLINE]
+        self.timeHorizon = problem['Arena'][jf.ArenaFeatures.TIMEHORIZON]
+        pg.correct_effector_data(problem)
         self.problem = problem
         self.nbEffector, self.nbTask = len(problem['Effectors']), len(problem['Targets'])
-        self.effectorData = np.ones((self.nbEffector, len(JF.EffectorFeatures)), dtype=float)
-        self.taskData = np.ones((self.nbTask, len(JF.TaskFeatures)), dtype=float)
-        self.opportunityData = np.ones((self.nbEffector, self.nbTask, len(JF.OpportunityFeatures)), dtype=float)
+        self.effectorData = np.ones((self.nbEffector, len(jf.EffectorFeatures)), dtype=float)
+        self.taskData = np.ones((self.nbTask, len(jf.TaskFeatures)), dtype=float)
+        self.opportunityData = np.ones((self.nbEffector, self.nbTask, len(jf.OpportunityFeatures)), dtype=float)
         for i in range(0, self.nbEffector):
             self.effectorData[i] = np.asarray(problem['Effectors'][i])
         for i in range(0, self.nbTask):
@@ -165,18 +165,18 @@ class Simulation:
         pass
 
     def euclidean_distance(self, effector, task):
-        return math.sqrt((effector[JF.EffectorFeatures.XPOS] - task[JF.TaskFeatures.XPOS]) ** 2 + (
-                effector[JF.EffectorFeatures.YPOS] - task[JF.TaskFeatures.YPOS]) ** 2)
+        return math.sqrt((effector[jf.EffectorFeatures.XPOS] - task[jf.TaskFeatures.XPOS]) ** 2 + (
+                effector[jf.EffectorFeatures.YPOS] - task[jf.TaskFeatures.YPOS]) ** 2)
 
     def return_distance(self, effector, task):
         EucDistance = self.euclidean_distance(effector, task)
-        travelDistance = max(EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE], 0)
-        new_x = effector[JF.EffectorFeatures.XPOS] + (
-                task[JF.TaskFeatures.XPOS] - effector[JF.EffectorFeatures.XPOS]) * travelDistance / EucDistance
-        new_y = effector[JF.EffectorFeatures.YPOS] + (
-                task[JF.TaskFeatures.YPOS] - effector[JF.EffectorFeatures.YPOS]) * travelDistance / EucDistance
+        travelDistance = max(EucDistance - effector[jf.EffectorFeatures.EFFECTIVEDISTANCE], 0)
+        new_x = effector[jf.EffectorFeatures.XPOS] + (
+                task[jf.TaskFeatures.XPOS] - effector[jf.EffectorFeatures.XPOS]) * travelDistance / EucDistance
+        new_y = effector[jf.EffectorFeatures.YPOS] + (
+                task[jf.TaskFeatures.YPOS] - effector[jf.EffectorFeatures.YPOS]) * travelDistance / EucDistance
         return_trip = math.sqrt(
-            (effector[JF.EffectorFeatures.STARTX] - new_x) ** 2 + (effector[JF.EffectorFeatures.STARTY] - new_y) ** 2)
+            (effector[jf.EffectorFeatures.STARTX] - new_x) ** 2 + (effector[jf.EffectorFeatures.STARTY] - new_y) ** 2)
         return travelDistance + return_trip
 
     def getSchedule(self):
@@ -203,7 +203,7 @@ class Simulation:
         effector = self.effectorData[effectorIndex, :]
         task = self.taskData[taskIndex, :]
         opportunity = self.opportunityData[effectorIndex, taskIndex, :]
-        if opportunity[JF.OpportunityFeatures.SELECTABLE] == False:
+        if opportunity[jf.OpportunityFeatures.SELECTABLE] == False:
             raise IndexError(f"This action is not selectable. Effector: {effectorIndex} Task: {taskIndex}")
 
         # first copy the tensor (not by ref.. make sure to do actual copy)
@@ -213,78 +213,78 @@ class Simulation:
                 (self.effectorData, self.taskData, self.opportunityData, self.schedule, self.previousPSuccess))
         # Do not use history, update the schedule directly.
         # Make a separate stack for the schedule so that we don't need to iterate through the whole state history
-        self.schedule[effectorIndex].append((taskIndex, opportunity[JF.OpportunityFeatures.TIMECOST]))
+        self.schedule[effectorIndex].append((taskIndex, opportunity[jf.OpportunityFeatures.TIMECOST]))
 
         EucDistance = self.euclidean_distance(effector, task)
-        travelDistance = EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE]
+        travelDistance = EucDistance - effector[jf.EffectorFeatures.EFFECTIVEDISTANCE]
 
         if travelDistance > 0:  # Calculate the updated position
-            effector[JF.EffectorFeatures.XPOS] += (task[JF.TaskFeatures.XPOS] - effector[
-                JF.EffectorFeatures.XPOS]) * travelDistance / EucDistance
-            effector[JF.EffectorFeatures.YPOS] += (task[JF.TaskFeatures.YPOS] - effector[
-                JF.EffectorFeatures.YPOS]) * travelDistance / EucDistance
+            effector[jf.EffectorFeatures.XPOS] += (task[jf.TaskFeatures.XPOS] - effector[
+                jf.EffectorFeatures.XPOS]) * travelDistance / EucDistance
+            effector[jf.EffectorFeatures.YPOS] += (task[jf.TaskFeatures.YPOS] - effector[
+                jf.EffectorFeatures.YPOS]) * travelDistance / EucDistance
         else:
             pass  # We can take action against the target from our current position
 
-        effector[JF.EffectorFeatures.TIMELEFT] -= opportunity[JF.OpportunityFeatures.TIMECOST]
-        effector[JF.EffectorFeatures.ENERGYLEFT] -= opportunity[JF.OpportunityFeatures.ENERGYCOST]
-        effector[JF.EffectorFeatures.AMMOLEFT] -= effector[JF.EffectorFeatures.AMMORATE]
+        effector[jf.EffectorFeatures.TIMELEFT] -= opportunity[jf.OpportunityFeatures.TIMECOST]
+        effector[jf.EffectorFeatures.ENERGYLEFT] -= opportunity[jf.OpportunityFeatures.ENERGYCOST]
+        effector[jf.EffectorFeatures.AMMOLEFT] -= effector[jf.EffectorFeatures.AMMORATE]
         # We are dealing with expected plan, not an actual instance of a plan.
         # Damage will be relative to pSuccess rather than sometimes being right and sometimes being wrong
-        reward = opportunity[JF.OpportunityFeatures.PSUCCESS] * task[JF.TaskFeatures.VALUE]
-        self.taskData[taskIndex][JF.TaskFeatures.VALUE] -= reward
+        reward = opportunity[jf.OpportunityFeatures.PSUCCESS] * task[jf.TaskFeatures.VALUE]
+        self.taskData[taskIndex][jf.TaskFeatures.VALUE] -= reward
 
-        task[JF.TaskFeatures.SELECTED] += 0.5  # Count the number of engagements so far
+        task[jf.TaskFeatures.SELECTED] += 0.5  # Count the number of engagements so far
 
-        if task[JF.TaskFeatures.SELECTED] >= 1:  # Down the road: opportunities[:,:,selectable] &= task[:,selected] >= 1
+        if task[jf.TaskFeatures.SELECTED] >= 1:  # Down the road: opportunities[:,:,selectable] &= task[:,selected] >= 1
             for i in range(0, self.nbEffector):
-                self.opportunityData[i][taskIndex][JF.OpportunityFeatures.SELECTABLE] = False
-                self.opportunityData[i][taskIndex][JF.OpportunityFeatures.PSUCCESS] = 0
+                self.opportunityData[i][taskIndex][jf.OpportunityFeatures.SELECTABLE] = False
+                self.opportunityData[i][taskIndex][jf.OpportunityFeatures.PSUCCESS] = 0
 
         for i in range(0, self.nbTask):
             EucDistance = self.euclidean_distance(effector, self.taskData[i])
             # If it wasn't selectable before, could that change?  If not, drop this set of operations whenever something is already unfeasible
-            if not effector[JF.EffectorFeatures.STATIC]:
+            if not effector[jf.EffectorFeatures.STATIC]:
                 RTDistance = self.return_distance(effector, self.taskData[i])
-                travelDistance = max(0, EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE])
-                if (RTDistance > effector[JF.EffectorFeatures.ENERGYLEFT] / (
-                        effector[JF.EffectorFeatures.ENERGYRATE]) or
-                        effector[JF.EffectorFeatures.TIMELEFT] < RTDistance / (
-                                effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)):
+                travelDistance = max(0, EucDistance - effector[jf.EffectorFeatures.EFFECTIVEDISTANCE])
+                if (RTDistance > effector[jf.EffectorFeatures.ENERGYLEFT] / (
+                        effector[jf.EffectorFeatures.ENERGYRATE]) or
+                        effector[jf.EffectorFeatures.TIMELEFT] < RTDistance / (
+                                effector[jf.EffectorFeatures.SPEED] * SPEED_CORRECTION)):
                     # print(f"Effector: {effectorIndex}, Target: {i}")
                     # print(f"Dist: {RTDistance > effector[JF.EffectorFeatures.ENERGYLEFT] / effector[JF.EffectorFeatures.ENERGYRATE]} : {RTDistance} > {effector[JF.EffectorFeatures.ENERGYLEFT]} / {effector[JF.EffectorFeatures.ENERGYRATE]}")
                     # print(f"Time: {effector[JF.EffectorFeatures.TIMELEFT] < RTDistance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)} : {effector[JF.EffectorFeatures.TIMELEFT]} < {RTDistance} / {effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION}")
-                    self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
+                    self.opportunityData[effectorIndex][i][jf.OpportunityFeatures.SELECTABLE] = False
                 else:
-                    self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = travelDistance / (
+                    self.opportunityData[effectorIndex][i][jf.OpportunityFeatures.TIMECOST] = travelDistance / (
                             effector[
-                                JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)  # + effector[JF.EffectorFeatures.DUTYCYCLE]
-                    self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] = \
-                        travelDistance * effector[JF.EffectorFeatures.ENERGYRATE]  # Energy is related to fuel or essentially range
+                                jf.EffectorFeatures.SPEED] * SPEED_CORRECTION)  # + effector[JF.EffectorFeatures.DUTYCYCLE]
+                    self.opportunityData[effectorIndex][i][jf.OpportunityFeatures.ENERGYCOST] = \
+                        travelDistance * effector[jf.EffectorFeatures.ENERGYRATE]  # Energy is related to fuel or essentially range
             else:
-                if EucDistance <= effector[JF.EffectorFeatures.EFFECTIVEDISTANCE]:
-                    self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = \
-                        EucDistance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)  # effector[JF.EffectorFeatures.DUTYCYCLE]
+                if EucDistance <= effector[jf.EffectorFeatures.EFFECTIVEDISTANCE]:
+                    self.opportunityData[effectorIndex][i][jf.OpportunityFeatures.TIMECOST] = \
+                        EucDistance / (effector[jf.EffectorFeatures.SPEED] * SPEED_CORRECTION)  # effector[JF.EffectorFeatures.DUTYCYCLE]
                     self.opportunityData[effectorIndex][i][
-                        JF.OpportunityFeatures.ENERGYCOST] = 0  # Energy is related to fuel or essentially range
+                        jf.OpportunityFeatures.ENERGYCOST] = 0  # Energy is related to fuel or essentially range
                 else:
-                    self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
+                    self.opportunityData[effectorIndex][i][jf.OpportunityFeatures.SELECTABLE] = False
 
-            if self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] > effector[
-                JF.EffectorFeatures.TIMELEFT]:
-                self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
-            elif self.effectorData[effectorIndex][JF.EffectorFeatures.AMMORATE] > effector[
-                JF.EffectorFeatures.AMMOLEFT]:
-                self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
-            elif self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] > effector[
-                JF.EffectorFeatures.ENERGYLEFT]:
-                self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] = False
+            if self.opportunityData[effectorIndex][i][jf.OpportunityFeatures.TIMECOST] > effector[
+                jf.EffectorFeatures.TIMELEFT]:
+                self.opportunityData[effectorIndex][i][jf.OpportunityFeatures.SELECTABLE] = False
+            elif self.effectorData[effectorIndex][jf.EffectorFeatures.AMMORATE] > effector[
+                jf.EffectorFeatures.AMMOLEFT]:
+                self.opportunityData[effectorIndex][i][jf.OpportunityFeatures.SELECTABLE] = False
+            elif self.opportunityData[effectorIndex][i][jf.OpportunityFeatures.ENERGYCOST] > effector[
+                jf.EffectorFeatures.ENERGYLEFT]:
+                self.opportunityData[effectorIndex][i][jf.OpportunityFeatures.SELECTABLE] = False
 
-            if self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] == False:
-                self.opportunityData[effectorIndex][i][JF.OpportunityFeatures.PSUCCESS] = 0
+            if self.opportunityData[effectorIndex][i][jf.OpportunityFeatures.SELECTABLE] == False:
+                self.opportunityData[effectorIndex][i][jf.OpportunityFeatures.PSUCCESS] = 0
 
         # self.opportunityData[:,:,JF.OpportunityFeatures.PSUCCESS] &= self.opportunityData[:,:,JF.OpportunityFeatures.SELECTABLE]
-        if np.sum(self.opportunityData[:, :, JF.OpportunityFeatures.SELECTABLE]) >= 1:
+        if np.sum(self.opportunityData[:, :, jf.OpportunityFeatures.SELECTABLE]) >= 1:
             terminal = False
         else:
             terminal = True
@@ -300,7 +300,7 @@ class Simulation:
             nbEffector = self.nbEffector
             nbTask = self.nbTask
         else:
-            PG.correct_effector_data(state)
+            pg.correct_effector_data(state)
             effectorData, taskData, opportunityData = unMergeState(state)
             nbEffector = len(effectorData)
             nbTask = len(taskData)
@@ -315,69 +315,69 @@ class Simulation:
         effector = effectorData[effectorIndex, :]
         task = taskData[taskIndex, :]
         opportunity = opportunityData[effectorIndex, taskIndex, :]
-        if not opportunity[JF.OpportunityFeatures.SELECTABLE]:
+        if not opportunity[jf.OpportunityFeatures.SELECTABLE]:
             raise IndexError(f"This action is not selectable. Effector: {effectorIndex} Task: {taskIndex}")
 
         EucDistance = self.euclidean_distance(effector, task)
-        travel_distance = EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE]
+        travel_distance = EucDistance - effector[jf.EffectorFeatures.EFFECTIVEDISTANCE]
 
         travel_required = travel_distance > 0  # Move the effector to an updated position if required
-        effector[JF.EffectorFeatures.XPOS] += travel_required * (task[JF.TaskFeatures.XPOS] - effector[
-            JF.EffectorFeatures.XPOS]) * travel_distance / EucDistance
-        effector[JF.EffectorFeatures.YPOS] += travel_required * (task[JF.TaskFeatures.YPOS] - effector[
-            JF.EffectorFeatures.YPOS]) * travel_distance / EucDistance
+        effector[jf.EffectorFeatures.XPOS] += travel_required * (task[jf.TaskFeatures.XPOS] - effector[
+            jf.EffectorFeatures.XPOS]) * travel_distance / EucDistance
+        effector[jf.EffectorFeatures.YPOS] += travel_required * (task[jf.TaskFeatures.YPOS] - effector[
+            jf.EffectorFeatures.YPOS]) * travel_distance / EucDistance
 
-        effector[JF.EffectorFeatures.TIMELEFT] -= opportunity[JF.OpportunityFeatures.TIMECOST]
-        effector[JF.EffectorFeatures.ENERGYLEFT] -= opportunity[JF.OpportunityFeatures.ENERGYCOST]
-        effector[JF.EffectorFeatures.AMMOLEFT] -= effector[JF.EffectorFeatures.AMMORATE]
+        effector[jf.EffectorFeatures.TIMELEFT] -= opportunity[jf.OpportunityFeatures.TIMECOST]
+        effector[jf.EffectorFeatures.ENERGYLEFT] -= opportunity[jf.OpportunityFeatures.ENERGYCOST]
+        effector[jf.EffectorFeatures.AMMOLEFT] -= effector[jf.EffectorFeatures.AMMORATE]
         # We are dealing with expected plan, not an actual instance of a plan.
         # Damage will be relative to pSuccess rather than sometimes being right and sometimes being wrong
-        reward = opportunity[JF.OpportunityFeatures.PSUCCESS] * task[JF.TaskFeatures.VALUE]
-        taskData[taskIndex][JF.TaskFeatures.VALUE] -= reward
+        reward = opportunity[jf.OpportunityFeatures.PSUCCESS] * task[jf.TaskFeatures.VALUE]
+        taskData[taskIndex][jf.TaskFeatures.VALUE] -= reward
 
-        task[JF.TaskFeatures.SELECTED] += 0.5  # Count the number of engagements so far
+        task[jf.TaskFeatures.SELECTED] += 0.5  # Count the number of engagements so far
 
         # The task has been selected the maximum number of times, no other effectors can select this task.
-        opportunityData[:, taskIndex, JF.OpportunityFeatures.SELECTABLE] *= (task[JF.TaskFeatures.SELECTED] < 1)
-        opportunityData[:, taskIndex, JF.OpportunityFeatures.PSUCCESS] *= \
-            opportunityData[:, taskIndex, JF.OpportunityFeatures.SELECTABLE]
+        opportunityData[:, taskIndex, jf.OpportunityFeatures.SELECTABLE] *= (task[jf.TaskFeatures.SELECTED] < 1)
+        opportunityData[:, taskIndex, jf.OpportunityFeatures.PSUCCESS] *= \
+            opportunityData[:, taskIndex, jf.OpportunityFeatures.SELECTABLE]
 
         for i in range(0, nbTask):
-            if not opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE]:
+            if not opportunityData[effectorIndex][i][jf.OpportunityFeatures.SELECTABLE]:
                 continue
             EucDistance = self.euclidean_distance(effector, taskData[i])
-            mobile = not effector[JF.EffectorFeatures.STATIC]
+            mobile = not effector[jf.EffectorFeatures.STATIC]
             if mobile:
                 RTDistance = self.return_distance(effector, taskData[i])
-                travel_distance = max(0, EucDistance - effector[JF.EffectorFeatures.EFFECTIVEDISTANCE])
+                travel_distance = max(0, EucDistance - effector[jf.EffectorFeatures.EFFECTIVEDISTANCE])
                 # If the effector is static, then it doesn't move and tasks don't need to be updated here
                 # If the effector is mobile, then we need to validate that the moves are still feasible
-                maintain_value = (not mobile) or (RTDistance < effector[JF.EffectorFeatures.ENERGYLEFT] /
-                                                  effector[JF.EffectorFeatures.ENERGYRATE] and
-                                                  effector[JF.EffectorFeatures.TIMELEFT] > RTDistance / (
-                                                    effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION))
-                opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] *= maintain_value
-                opportunityData[effectorIndex][i][JF.OpportunityFeatures.PSUCCESS] *= maintain_value
+                maintain_value = (not mobile) or (RTDistance < effector[jf.EffectorFeatures.ENERGYLEFT] /
+                                                  effector[jf.EffectorFeatures.ENERGYRATE] and
+                                                  effector[jf.EffectorFeatures.TIMELEFT] > RTDistance / (
+                                                          effector[jf.EffectorFeatures.SPEED] * SPEED_CORRECTION))
+                opportunityData[effectorIndex][i][jf.OpportunityFeatures.SELECTABLE] *= maintain_value
+                opportunityData[effectorIndex][i][jf.OpportunityFeatures.PSUCCESS] *= maintain_value
 
-                opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] = \
-                    (not mobile) * opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] + \
-                    mobile * travel_distance / (effector[JF.EffectorFeatures.SPEED] * SPEED_CORRECTION)
-                opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] = \
-                    (not mobile) * opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] + \
-                    mobile * travel_distance * effector[JF.EffectorFeatures.ENERGYRATE]
+                opportunityData[effectorIndex][i][jf.OpportunityFeatures.TIMECOST] = \
+                    (not mobile) * opportunityData[effectorIndex][i][jf.OpportunityFeatures.TIMECOST] + \
+                    mobile * travel_distance / (effector[jf.EffectorFeatures.SPEED] * SPEED_CORRECTION)
+                opportunityData[effectorIndex][i][jf.OpportunityFeatures.ENERGYCOST] = \
+                    (not mobile) * opportunityData[effectorIndex][i][jf.OpportunityFeatures.ENERGYCOST] + \
+                    mobile * travel_distance * effector[jf.EffectorFeatures.ENERGYRATE]
 
             # If there isn't enough time, ammo, or energy, mark the opportunity as infeasible
-            feasible = opportunityData[effectorIndex][i][JF.OpportunityFeatures.TIMECOST] <= \
-                effector[JF.EffectorFeatures.TIMELEFT] and \
-                effectorData[effectorIndex][JF.EffectorFeatures.AMMORATE] <= \
-                effector[JF.EffectorFeatures.AMMOLEFT] and \
-                opportunityData[effectorIndex][i][JF.OpportunityFeatures.ENERGYCOST] <= \
-                effector[JF.EffectorFeatures.ENERGYLEFT]
-            opportunityData[effectorIndex][i][JF.OpportunityFeatures.SELECTABLE] *= feasible
-            opportunityData[effectorIndex][i][JF.OpportunityFeatures.PSUCCESS] *= feasible
+            feasible = opportunityData[effectorIndex][i][jf.OpportunityFeatures.TIMECOST] <= \
+                       effector[jf.EffectorFeatures.TIMELEFT] and \
+                       effectorData[effectorIndex][jf.EffectorFeatures.AMMORATE] <= \
+                       effector[jf.EffectorFeatures.AMMOLEFT] and \
+                       opportunityData[effectorIndex][i][jf.OpportunityFeatures.ENERGYCOST] <= \
+                       effector[jf.EffectorFeatures.ENERGYLEFT]
+            opportunityData[effectorIndex][i][jf.OpportunityFeatures.SELECTABLE] *= feasible
+            opportunityData[effectorIndex][i][jf.OpportunityFeatures.PSUCCESS] *= feasible
 
         # If no actions are selectable, we are in a terminal state
-        terminal = not opportunityData[:, :, JF.OpportunityFeatures.SELECTABLE].any()
+        terminal = not opportunityData[:, :, jf.OpportunityFeatures.SELECTABLE].any()
 
         return self.formatState(effectorData, taskData, opportunityData), reward, terminal
 
@@ -400,8 +400,8 @@ def mergeState(effectorData, taskData, opportunityData):
     make a single tensor with each tensor appended in an n.m.(p+q+r)
     """
     # TODO: change this to use "unsqueeze"
-    effectors = np.zeros((len(taskData), len(effectorData), len(JF.EffectorFeatures)))  # m.n.p
-    tasks = np.zeros((len(effectorData), len(taskData), len(JF.TaskFeatures)))  # n.m.q
+    effectors = np.zeros((len(taskData), len(effectorData), len(jf.EffectorFeatures)))  # m.n.p
+    tasks = np.zeros((len(effectorData), len(taskData), len(jf.TaskFeatures)))  # n.m.q
     effectors += effectorData
     tasks += taskData
     effectors = effectors.transpose([1, 0, 2])  # Transpose from m.n.p to n.m.p
@@ -422,9 +422,9 @@ def unMergeState(state):
         taskData = state['Targets']
         opportunityData = state['Opportunities']
     else:
-        effectorData = state[:, 0, :len(JF.EffectorFeatures)]
-        taskData = state[0, :, len(JF.EffectorFeatures):len(JF.EffectorFeatures) + len(JF.TaskFeatures)]
-        opportunityData = state[:, :, len(JF.EffectorFeatures) + len(JF.TaskFeatures):]
+        effectorData = state[:, 0, :len(jf.EffectorFeatures)]
+        taskData = state[0, :, len(jf.EffectorFeatures):len(jf.EffectorFeatures) + len(jf.TaskFeatures)]
+        opportunityData = state[:, :, len(jf.EffectorFeatures) + len(jf.TaskFeatures):]
     return effectorData, taskData, opportunityData
 
 
@@ -438,10 +438,10 @@ def main():
     if len(sys.argv) > 1:
         simProblem = loadProblem(sys.argv[1])
     else:
-        problemGenerators = [PG.allPlanes, PG.infantryOnly, PG.combatArms, PG.boatsBoatsBoats]
+        problemGenerators = [pg.allPlanes, pg.infantryOnly, pg.combatArms, pg.boatsBoatsBoats]
         problemGenerator = random.choice(problemGenerators)
 
-        problemGenerator = PG.toy
+        problemGenerator = pg.toy
         simProblem = problemGenerator()
 
     agent = agents[agentSelection]

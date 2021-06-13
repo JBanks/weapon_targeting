@@ -1,9 +1,9 @@
 
 if __package__ is not None and len(__package__) > 0:
     print(f"{__name__} using relative import inside of {__package__}")
-    from . import JFAGA
+    from . import genetic_algorithm
 else:
-    import JFAGA
+    import genetic_algorithm
 import argparse
 import plotly.graph_objects as go
 import numpy as np
@@ -15,7 +15,7 @@ def collect_datapoints(problem, populations=(80, 120, 160, 200), generations=100
     all_times = []
     for population in populations:
         print(f"Calculating population: {population}")
-        rewards, times = JFAGA.jfa_ga_explorer(problem, population, generations)
+        rewards, times = genetic_algorithm.jfa_ga_explorer(problem, population, generations)
         # rewards = np.asarray([5, 7, 9, 10, 11, 11, 12, 12, 12, 13, 13]) * population / 80  # Make fake numbers
         # times = np.asarray([20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40]) * population / 80  # Make fake numbers
         all_rewards.append(rewards)
@@ -55,7 +55,7 @@ def main():
     args = parser.parse_args()
     # args = parser.parse_args(['--results GS-GVeCUHSIRJGfhz0lHlwcvw.json'])
     if args.solve:
-        problem = JFAGA.pg.loadProblem(args.problem)
+        problem = genetic_algorithm.pg.loadProblem(args.problem)
         datapoints = collect_datapoints(problem, generations=400, populations=[40, 80, 160, 240])
         with open(f"{args.results}", 'w') as file:
             json.dump(datapoints, file)

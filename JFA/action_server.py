@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import SampleSimulator as Sim
-import ProblemGenerators as PG
-import JFAFeatures as JF
-import JFASolvers as JS
+import simulator as sim
+import problem_generators as pg
+import features as jf
+import solvers as js
 import numpy as np
 import json
 import urllib
@@ -12,26 +12,26 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 pythonState = False
-env = Sim.Simulation(Sim.mergeState)
+env = sim.Simulation(sim.mergeState)
 MULTIPLE = True
 
 
 def get_action_from_solver(state):
-	_, solution = JS.greedy(state)  # AStar(state)
+	_, solution = js.greedy(state)  # AStar(state)
 	return solution[0]
 
 
 def get_actions_from_solver(state):
-	_, solution = JS.greedy(state)
+	_, solution = js.greedy(state)
 	return solution
 
 
 def compare_results(python_state, unity_state):
 	pad = 0  # len(JF.EffectorFeatures) + len(JF.TaskFeatures)
-	print(f"U-Energy cost: {unity_state[:, 0, pad + JF.EffectorFeatures.ENERGYLEFT]}")
-	print(f"P-Energy cost: {python_state[:, 0, pad + JF.EffectorFeatures.ENERGYLEFT]}")
-	print(f"U-Time cost: {unity_state[:, 0, pad + JF.EffectorFeatures.TIMELEFT]}")
-	print(f"P-Time cost: {python_state[:, 0, pad + JF.EffectorFeatures.TIMELEFT]}")
+	print(f"U-Energy cost: {unity_state[:, 0, pad + jf.EffectorFeatures.ENERGYLEFT]}")
+	print(f"P-Energy cost: {python_state[:, 0, pad + jf.EffectorFeatures.ENERGYLEFT]}")
+	print(f"U-Time cost: {unity_state[:, 0, pad + jf.EffectorFeatures.TIMELEFT]}")
+	print(f"P-Time cost: {python_state[:, 0, pad + jf.EffectorFeatures.TIMELEFT]}")
 
 
 @app.route('/', methods=['GET'])
@@ -46,8 +46,8 @@ def get_action():
 	problem = json.loads(json_string)
 	for key in problem.keys():
 		problem[key] = np.asarray(problem[key])
-	PG.correct_effector_data(problem)
-	state = Sim.mergeState(problem['Effectors'], problem['Targets'], problem['Opportunities'])
+	pg.correct_effector_data(problem)
+	state = sim.mergeState(problem['Effectors'], problem['Targets'], problem['Opportunities'])
 	if type(pythonState) == np.ndarray:
 		compare_results(pythonState, state)
 	if MULTIPLE:

@@ -3,13 +3,13 @@
 import heapq
 if __package__ is not None and len(__package__) > 0:
     print(f"{__name__} using relative import inside of {__package__}")
-    from . import SampleSimulator as Sim
-    from . import JFAFeatures as JF
-    from . import ProblemGenerators as PG
+    from . import simulator as sim
+    from . import features as jf
+    from . import problem_generators as pg
 else:
-    import SampleSimulator as Sim
-    import JFAFeatures as JF
-    import ProblemGenerators as PG
+    import simulator as sim
+    import features as jf
+    import problem_generators as pg
 import numpy as np
 import copy
 import time
@@ -69,11 +69,11 @@ class Node:
 
 
 def random_solution(problem):
-    env = Sim.Simulation(Sim.state_to_dict)
+    env = sim.Simulation(sim.state_to_dict)
     state = env.reset(problem)
-    node = Node(sum(state['Targets'][:, JF.TaskFeatures.VALUE]), None, state, 0)
+    node = Node(sum(state['Targets'][:, jf.TaskFeatures.VALUE]), None, state, 0)
     while not node.terminal:
-        options = np.asarray(np.where(state['Opportunities'][:, :, JF.OpportunityFeatures.PSUCCESS] > 0)).transpose()
+        options = np.asarray(np.where(state['Opportunities'][:, :, jf.OpportunityFeatures.PSUCCESS] > 0)).transpose()
         action_index = np.random.choice(len(options))
         action = tuple(options[action_index])
         state, reward, terminal = env.update_state(action, copy.deepcopy(state))
@@ -84,13 +84,13 @@ def random_solution(problem):
 
 
 def greedy(problem):
-    env = Sim.Simulation(Sim.state_to_dict)
+    env = sim.Simulation(sim.state_to_dict)
     state = env.reset(problem)  # get initial state or load a new problem
 
-    node = Node(sum(state['Targets'][:, JF.TaskFeatures.VALUE]), None, state, 0)
+    node = Node(sum(state['Targets'][:, jf.TaskFeatures.VALUE]), None, state, 0)
     node = greedy_rec(node, env=env)
 
-    return sum(state['Targets'][:, JF.TaskFeatures.VALUE]) - node.g, node.Solution()
+    return sum(state['Targets'][:, jf.TaskFeatures.VALUE]) - node.g, node.Solution()
 
 
 def greedy_rec(node, env=None):
@@ -99,9 +99,9 @@ def greedy_rec(node, env=None):
     """
     state = node.state
 
-    pSuccesses = state['Opportunities'][:, :, JF.OpportunityFeatures.PSUCCESS]
-    values = state['Targets'][:, JF.TaskFeatures.VALUE]
-    selectable = state['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE]
+    pSuccesses = state['Opportunities'][:, :, jf.OpportunityFeatures.PSUCCESS]
+    values = state['Targets'][:, jf.TaskFeatures.VALUE]
+    selectable = state['Opportunities'][:, :, jf.OpportunityFeatures.SELECTABLE]
     action = np.unravel_index(np.argmax(pSuccesses * values * selectable), pSuccesses.shape)
 
     state, reward, terminal = env.update_state(action, copy.deepcopy(state))
@@ -127,20 +127,20 @@ def astar_heuristic(node):
     remaining_reward = 0
     opportunities = state['Opportunities'][:, :, :].copy()
     for j, target in enumerate(state['Targets']):
-        if target[JF.TaskFeatures.SELECTED] == 1:
+        if target[jf.TaskFeatures.SELECTED] == 1:
             continue  # This task has already been selected the maximum number of times.
         for i in range(len(opportunities)):
             if [i, j] in node.solution and node.solution[-1] != [i, j]:
-                opportunities[i, j, JF.OpportunityFeatures.PSUCCESS] = 0.00000001
-        remaining_moves = int(min((1 - target[JF.TaskFeatures.SELECTED]) * 2,
-                                  sum(opportunities[:, j, JF.OpportunityFeatures.SELECTABLE] * 2)))
+                opportunities[i, j, jf.OpportunityFeatures.PSUCCESS] = 0.00000001
+        remaining_moves = int(min((1 - target[jf.TaskFeatures.SELECTED]) * 2,
+                                  sum(opportunities[:, j, jf.OpportunityFeatures.SELECTABLE] * 2)))
         if not remaining_moves:
             continue  # The minimum between the number of hits left on a target, and eligible effectors is zero.
-        value = target[JF.TaskFeatures.VALUE]
-        top = np.argpartition(opportunities[:, j, JF.OpportunityFeatures.PSUCCESS], -1)[
+        value = target[jf.TaskFeatures.VALUE]
+        top = np.argpartition(opportunities[:, j, jf.OpportunityFeatures.PSUCCESS], -1)[
                -1:]  # select the top 'n' effectors.
         for move in range(remaining_moves):
-            reward = value * opportunities[top[0], j, JF.OpportunityFeatures.PSUCCESS]
+            reward = value * opportunities[top[0], j, jf.OpportunityFeatures.PSUCCESS]
             remaining_reward += reward
             value -= reward
     return remaining_reward  # Return the remaining reward if all moves were possible.
@@ -150,9 +150,9 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=False):
     """
     This is an A* implementation to search for a solution to a given JFA problem.
     """
-    env = Sim.Simulation(Sim.state_to_dict)
+    env = sim.Simulation(sim.state_to_dict)
     state = env.reset(problem)  # get initial state or load a new problem
-    node = Node(sum(state['Targets'][:, JF.TaskFeatures.VALUE]), None, state, 0)
+    node = Node(sum(state['Targets'][:, jf.TaskFeatures.VALUE]), None, state, 0)
     expansions = 0
     branchFactor = 0
     duplicate_states = 0
@@ -180,7 +180,7 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=False):
         explored.append(node)
         state = node.state
         for effector, target in np.stack(
-                np.where(state['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE] == True), axis=1):
+                np.where(state['Opportunities'][:, :, jf.OpportunityFeatures.SELECTABLE] == True), axis=1):
             action = (effector, target)
             new_state, reward, terminal = env.update_state(action, copy.deepcopy(state))
             g = node.g - reward  # The remaining value after the action taken
@@ -203,12 +203,12 @@ def ucs_heuristic(state):
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         filename = sys.argv[1]
-        simProblem = PG.loadProblem(filename)
+        simProblem = pg.loadProblem(filename)
     else:
-        simProblem = PG.network_validation(20, 200)
+        simProblem = pg.network_validation(20, 200)
     print(f"Problem size: {(len(simProblem['Effectors']), len(simProblem['Targets']))}")
-    Sim.printState(Sim.mergeState(simProblem['Effectors'], simProblem['Targets'], simProblem['Opportunities']))
-    rewards_available = sum(simProblem['Targets'][:, JF.TaskFeatures.VALUE])
+    sim.printState(sim.mergeState(simProblem['Effectors'], simProblem['Targets'], simProblem['Opportunities']))
+    rewards_available = sum(simProblem['Targets'][:, jf.TaskFeatures.VALUE])
 
     solvers = [{'name': "AStar", 'function': AStar, 'solve': True},
                {'name': "Greedy", 'function': greedy, 'solve': True},

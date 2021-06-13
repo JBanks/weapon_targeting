@@ -1,8 +1,8 @@
 if __package__ is not None and len(__package__) > 0:
     print(f"{__name__} using relative import inside of {__package__}")
-    from .WTAtools import *
+    from .tools import *
 else:
-    from WTAtools import *
+    from tools import *
 
 import argparse
 

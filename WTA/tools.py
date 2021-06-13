@@ -1,16 +1,16 @@
 if __package__ is not None and len(__package__) > 0:
     print(f"{__name__} using relative import inside of {__package__}")
-    from . import WTAOR
-    from . import WTAGA
-    from . import WTAGreedy
-    from . import WTABB
-    from . import WTAAStar
+    from . import operations_research
+    from . import genetic_algorithm
+    from . import greedy
+    from . import branch_bound
+    from . import a_star
 else:
-    import WTAOR
-    import WTAGA
-    import WTAGreedy
-    import WTABB
-    import WTAAStar
+    import operations_research
+    import genetic_algorithm
+    import greedy
+    import branch_bound
+    import a_star
 
 import numpy as np
 import json
@@ -58,13 +58,13 @@ def safe_filename(size_str, json_prefix):
 
 def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, csv_filename=time.time(),
                      problem_set="train", offset=0, directory=None, save=True):
-    solvers = [{'name': "Greedy", 'function': WTAGreedy.wta_greedy_solver, 'solve': True},
+    solvers = [{'name': "Greedy", 'function': greedy.wta_greedy_solver, 'solve': True},
                {'name': "Genetic Algorithm",
-                'function': partial(WTAGA.wta_ga_solver, population_size=256, generations_qty=15000),
+                'function': partial(genetic_algorithm.wta_ga_solver, population_size=256, generations_qty=15000),
                 'solve': False},
-               {'name': "Branch and Bound", 'function': WTABB.wta_branch_bound_solver, 'solve': True},
-               {'name': "A*", 'function': WTAAStar.wta_astar_solver, 'solve': False},
-               {'name': "OR-Tools", 'function': WTAOR.wta_or_solver, 'solve': False}]
+               {'name': "Branch and Bound", 'function': branch_bound.wta_branch_bound_solver, 'solve': True},
+               {'name': "A*", 'function': a_star.wta_astar_solver, 'solve': False},
+               {'name': "OR-Tools", 'function': operations_research.wta_or_solver, 'solve': False}]
 
     size_str = f"{weapons}x{targets}"
     if directory is None:
@@ -157,7 +157,7 @@ def grid_search(num_problems=25, num_attempts=5, numbering_offset=0, sizes=None)
             else:
                 problem = new_problem(*problem_size)
                 save_problem(problem, filepath)
-            g, solution = WTAOR.wta_or_solver(problem['values'], problem['p'])
+            g, solution = operations_research.wta_or_solver(problem['values'], problem['p'])
             g = sum(problem['values']) - g
             problem_results = [g]
             specific_values = [[g]]
@@ -170,12 +170,12 @@ def grid_search(num_problems=25, num_attempts=5, numbering_offset=0, sizes=None)
                             for mutation_fraction in mutation_fractions:
                                 gs = []
                                 for attempt in range(num_attempts):
-                                    g, solution = WTAGA.wta_ga_solver(problem['values'], problem['p'],
-                                                                      population_size=population_size,
-                                                                      crossover_probability=crossover_probability,
-                                                                      mutation_probability=mutation_probability,
-                                                                      generations_qty=generations_qty,
-                                                                      mutation_fraction=mutation_fraction)
+                                    g, solution = genetic_algorithm.wta_ga_solver(problem['values'], problem['p'],
+                                                                                  population_size=population_size,
+                                                                                  crossover_probability=crossover_probability,
+                                                                                  mutation_probability=mutation_probability,
+                                                                                  generations_qty=generations_qty,
+                                                                                  mutation_fraction=mutation_fraction)
                                     gs.append(g)
                                     # print(f"{g}, ", end="")
                                 specific_values.append(gs)

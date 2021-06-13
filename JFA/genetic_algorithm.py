@@ -7,13 +7,13 @@ from deap import tools
 # from scoop import futures
 if __package__ is not None and len(__package__) > 0:
     print(f"{__name__} using relative import inside of {__package__}")
-    from . import SampleSimulator as Sim
-    from . import JFAFeatures as jf
-    from . import ProblemGenerators as pg
+    from . import simulator as sim
+    from . import features as jf
+    from . import problem_generators as pg
 else:
-    import SampleSimulator as Sim
-    import JFAFeatures as jf
-    import ProblemGenerators as pg
+    import simulator as sim
+    import features as jf
+    import problem_generators as pg
 import copy
 import time
 
@@ -30,7 +30,7 @@ def memoize(f):
 
 def jfa_remove_inaccessible_actions(problem, actions):
     cleaned_list = []
-    env = Sim.Simulation(Sim.state_to_dict)
+    env = sim.Simulation(sim.state_to_dict)
     state = copy.deepcopy(problem)
     achieved_reward = 0
     for action in actions:
@@ -61,7 +61,7 @@ def jfa_ga_explorer(problem, population_size=40, generations_qty=5000, crossover
     actions = []
 
     max_hits = 2
-    env = Sim.Simulation(Sim.state_to_dict)
+    env = sim.Simulation(sim.state_to_dict)
     num_effectors = len(problem['Effectors'])
     num_targets = len(problem['Targets'])
     opportunities = []

@@ -2,17 +2,17 @@
 
 if __package__ is not None and len(__package__) > 0:
     print(f"{__name__} using relative import inside of {__package__}")
-    from . import SampleSimulator as Sim
-    from . import JFAFeatures as JF
-    from . import ProblemGenerators as PG
-    from . import JFASolvers as JS
-    from . import JFAGA as JG
+    from . import simulator as sim
+    from . import features as jf
+    from . import problem_generators as pg
+    from . import solvers as js
+    from . import genetic_algorithm as jg
 else:
-    import SampleSimulator as Sim
-    import JFAFeatures as JF
-    import ProblemGenerators as PG
-    import JFASolvers as JS
-    import JFAGA as JG
+    import simulator as sim
+    import features as jf
+    import problem_generators as pg
+    import solvers as js
+    import genetic_algorithm as jg
 import numpy as np
 import time
 import csv
@@ -28,12 +28,12 @@ def log(string):
 
 
 if __name__ == '__main__':
-    solvers = [{'name': "Random Choice", 'function': JS.random_solution, 'solve': False},
+    solvers = [{'name': "Random Choice", 'function': js.random_solution, 'solve': False},
                {'name': "GA",
-                'function': partial(JG.jfa_ga_solver, population_size=240, generations_qty=15000),
+                'function': partial(jg.jfa_ga_solver, population_size=240, generations_qty=15000),
                 'solve': True},
-               {'name': "Greedy", 'function': JS.greedy, 'solve': True},
-               {'name': "AStar", 'function': JS.AStar, 'solve': False}]
+               {'name': "Greedy", 'function': js.greedy, 'solve': True},
+               {'name': "AStar", 'function': js.AStar, 'solve': False}]
     # AStar should be the last solver so that its solution get printed
     parser = argparse.ArgumentParser()
     parser.add_argument('--effectors', type=int, help="The number of effectors in each problem", default=3,
@@ -68,15 +68,15 @@ if __name__ == '__main__':
             filename = identifier + ".json"
             filepath = os.path.join(directory, filename)
             if os.path.exists(filepath):
-                simProblem = Sim.loadProblem(filepath)
+                simProblem = sim.loadProblem(filepath)
             else:
-                simProblem = PG.network_validation(effectors, targets)
-                while np.sum(simProblem['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE]) < 1:
-                    simProblem = PG.network_validation(effectors, targets)
-                Sim.saveProblem(simProblem, filepath)
+                simProblem = pg.network_validation(effectors, targets)
+                while np.sum(simProblem['Opportunities'][:, :, jf.OpportunityFeatures.SELECTABLE]) < 1:
+                    simProblem = pg.network_validation(effectors, targets)
+                sim.saveProblem(simProblem, filepath)
 
-            rewards_available = sum(simProblem['Targets'][:, JF.TaskFeatures.VALUE])
-            selectable_opportunities = np.sum(simProblem['Opportunities'][:, :, JF.OpportunityFeatures.SELECTABLE])
+            rewards_available = sum(simProblem['Targets'][:, jf.TaskFeatures.VALUE])
+            selectable_opportunities = np.sum(simProblem['Opportunities'][:, :, jf.OpportunityFeatures.SELECTABLE])
             log(f"Scenario {filename[:-5]} with {selectable_opportunities} selectable opportunities")
 
             if solve_problems:

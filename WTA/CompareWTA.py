@@ -1,8 +1,8 @@
 if __package__ is not None and len(__package__) > 0:
     print(f"{__name__} using relative import inside of {__package__}")
-    from .WTAtools import *
+    from .tools import *
 else:
-    from WTAtools import *
+    from tools import *
 import time
 import sys
 
@@ -12,7 +12,7 @@ def main():
         problem = load_problem(sys.argv[1])
     else:
         problem = new_problem()
-    solvers = [WTAOR.wta_or_solver, WTAGA.wta_ga_solver]
+    solvers = [operations_research.wta_or_solver, genetic_algorithm.wta_ga_solver]
     values, p = problem['values'], problem['p']
     total_value = sum(values)
     print(f"The total value for the problem is: {total_value}")
