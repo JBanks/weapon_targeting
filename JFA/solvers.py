@@ -27,7 +27,8 @@ class Node:
         self.state = state
         self.reward = reward
         self.terminal = terminal
-        self.solution = []
+        self._solution = []
+        self._parent = None
 
     def __eq__(self, other):
         if type(other) == type(self):
@@ -59,13 +60,13 @@ class Node:
         else:
             return self.g > other
 
-    def Parent(self, parent):
-        self.parent = parent
-        self.solution = self.parent.solution().copy()
-        self.solution.append(list(self.action))
+    def parent(self, parent):
+        self._parent = parent
+        self._solution = self._parent.solution().copy()
+        self._solution.append(list(self.action))
 
-    def Solution(self):
-        return self.solution
+    def solution(self):
+        return self._solution
 
 
 def random_solution(problem):
@@ -78,9 +79,9 @@ def random_solution(problem):
         action = tuple(options[action_index])
         state, reward, terminal = env.update_state(action, copy.deepcopy(state))
         child = Node(node.g - reward, action, state, reward, terminal)
-        child.Parent(node)
+        child.parent(node)
         node = child
-    return node.g, node.Solution()
+    return node.g, node.solution()
 
 
 def greedy(problem):
@@ -107,11 +108,11 @@ def greedy_rec(node, env=None):
     state, reward, terminal = env.update_state(action, copy.deepcopy(state))
     if terminal:
         child = Node(node.g - reward, action, state, reward, terminal)
-        child.Parent(node)
+        child.parent(node)
         return child
 
     once = Node(node.g - reward, action, state, reward, terminal)
-    once.Parent(node)
+    once.parent(node)
     once = greedy_rec(once, env)
 
     return once
@@ -130,7 +131,7 @@ def astar_heuristic(node):
         if target[jf.TaskFeatures.SELECTED] == 1:
             continue  # This task has already been selected the maximum number of times.
         for i in range(len(opportunities)):
-            if [i, j] in node.solution and node.solution[-1] != [i, j]:
+            if [i, j] in node.solution() and node.solution()[-1] != [i, j]:
                 opportunities[i, j, jf.OpportunityFeatures.PSUCCESS] = 0.00000001
         remaining_moves = int(min((1 - target[jf.TaskFeatures.SELECTED]) * 2,
                                   sum(opportunities[:, j, jf.OpportunityFeatures.SELECTABLE] * 2)))
@@ -167,14 +168,14 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=False):
         expansions += 1
         if track_progress:
             print(f"\rExpansions: {expansions}, Duplicates: {duplicate_states}", end="")
-        if hasattr(node, 'parent'):
+        if node._parent is not None:
             if node.terminal is True:
-                if node.g == node.parent.g - node.reward:
+                if node.g == node._parent.g - node.reward:
                     return node.g, node.solution()
-                node.g = node.parent.g - node.reward
+                node.g = node._parent.g - node.reward
                 heapq.heappush(frontier, node)
                 continue
-            node.g = node.parent.g - node.reward
+            node.g = node._parent.g - node.reward
             # This may actually not be the optimal.  There may be a more optimal node.
             # If the value is the same, we found it, if the value changes, put it back in the heap.
         explored.append(node)
@@ -185,7 +186,7 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=False):
             new_state, reward, terminal = env.update_state(action, copy.deepcopy(state))
             g = node.g - reward  # The remaining value after the action taken
             child = Node(g, action, new_state, reward, terminal)
-            child.Parent(node)
+            child.parent(node)
             h = heuristic(child)  # The possible remaining value assuming that all of the best actions can be taken
             child.g = g - h
             if child not in explored and child not in frontier:
