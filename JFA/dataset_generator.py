@@ -88,9 +88,9 @@ def generate_dataset(effectors, targets, quantity, solve_problems=False, directo
     """
     Generates a dataset in a given directory with given parameters
     """
-    solvers = [{'name': "Random Choice", 'function': JS.random_solution, 'solve': True},
-               {'name': "Greedy", 'function': JS.greedy, 'solve': True},
-               {'name': "AStar", 'function': JS.AStar, 'solve': True}] #AStar should be the last so that its solution get printed
+    solvers = [{'name': "Random Choice", 'function': js.random_solution, 'solve': False},
+               {'name': "Greedy", 'function': js.greedy, 'solve': False},
+               {'name': "AStar", 'function': js.AStar, 'solve': True}] #AStar should be the last so that its solution get printed
 
     #set up the appropriate directory to use
     if directory_arg is not None:
@@ -153,9 +153,9 @@ if __name__ == '__main__':
     solvers = [{'name': "Random Choice", 'function': js.random_solution, 'solve': False},
                {'name': "GA",
                 'function': partial(jg.jfa_ga_solver, population_size=240, generations_qty=15000),
-                'solve': True},
-               {'name': "Greedy", 'function': js.greedy, 'solve': True},
-               {'name': "AStar", 'function': js.AStar, 'solve': False}]
+                'solve': False},
+               {'name': "Greedy", 'function': js.greedy, 'solve': False},
+               {'name': "AStar", 'function': js.AStar, 'solve': True}]
     # AStar should be the last solver so that its solution get printed
     parser = argparse.ArgumentParser()
     parser.add_argument('--effectors', type=int, help="The number of effectors in each problem", default=3,
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     numbering_offset = args.offset
     solve_problems = args.solve
     # directory = f"{effectors}x{targets}"
-    directory = os.path.join(f"../JFA Validation Datasets for DRDC Slides", f"JFA {effectors}x{targets} Validation Set")
+    directory = os.path.join(f"JFA Validation Datasets for DRDC Slides", f"JFA {effectors}x{targets} Validation Set")
     try:
         os.mkdir(directory)
     except Exception as error:
