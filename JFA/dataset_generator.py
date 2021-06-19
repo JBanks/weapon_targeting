@@ -161,7 +161,7 @@ if __name__ == '__main__':
     parser.add_argument('--effectors', type=int, help="The number of effectors in each problem", default=3,
                         required=False)
     parser.add_argument('--targets', type=int, help="The number of targets in each problem", default=9, required=False)
-    parser.add_argument('--quantity', type=int, help="The number of problems of each size", default=100, required=False)
+    parser.add_argument('--quantity', type=int, help="The number of problems of each size", default=1, required=False)
     parser.add_argument('--offset', type=int, help="Numbering offset for scenarios", default=0, required=False)
     parser.add_argument('--solve', type=bool, help="Whether or not we will solve the problems", default=True,
                         required=False)
@@ -176,12 +176,13 @@ if __name__ == '__main__':
     try:
         os.mkdir(directory)
     except Exception as error:
-        print(f"Error: {error}")
+        pass
     csv_content = []
     csv_row = ["filename", "total reward"]
     for solver in solvers:
         if solver['solve']:
             csv_row.append(solver['name'])
+            csv_row.append('time (s)')
     csv_row.append("solution")
     csv_content.append(csv_row)
     for i in range(numbering_offset, num_problems + numbering_offset):
@@ -204,11 +205,14 @@ if __name__ == '__main__':
             if solve_problems:
                 csv_row = [filename, rewards_available]
                 start_time = time.time()
+                recent_time = start_time
                 solution = []
                 for solver in solvers:
                     if solver['solve']:
                         g, solution = solver['function'](simProblem)
                         csv_row.append(g)
+                        current_time = time.time()
+                        csv_row.append(current_time - recent_time)
                 end_time = time.time()
                 csv_row.append(solution)
 

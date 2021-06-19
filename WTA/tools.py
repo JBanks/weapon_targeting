@@ -78,7 +78,7 @@ def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, cs
     for solver in solvers:
         if solver['solve']:
             csv_row.append(solver['name'])
-            csv_row.append("time")
+            csv_row.append("time (s)")
     csv_row.append("solution")
     csv_content.append(csv_row)
     for i in range(offset, quantity + offset):
@@ -106,7 +106,7 @@ def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, cs
                         log(f"solution for {solver['name']}: {np.argmax(solution, axis=1)}: {g}")
                         csv_row.append(g)
                         current_time = time.time()
-                        csv_row.append(f"{current_time - recent_time:.6f}s")
+                        csv_row.append(current_time - recent_time)
                         recent_time = current_time
                 end_time = time.time()
                 csv_row.append(solution)
