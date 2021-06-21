@@ -2,7 +2,6 @@
 
 import heapq
 if __package__ is not None and len(__package__) > 0:
-    print(f"{__name__} using relative import inside of {__package__}")
     from . import simulator as sim
     from . import features as jf
     from . import problem_generators as pg
@@ -14,6 +13,9 @@ import numpy as np
 import copy
 import time
 import sys
+import functools
+import sortedcontainers as sc
+import zlib
 
 
 class Node:
@@ -60,13 +62,18 @@ class Node:
         else:
             return self.g > other
 
-    def parent(self, parent):
+    def parent(self, parent=None):
         self._parent = parent
         self._solution = self._parent.solution().copy()
         self._solution.append(list(self.action))
 
     def solution(self):
         return self._solution
+
+    def cat_string(self):
+        return zlib.compress(np.concatenate((np.ravel(self.state['Effectors']),
+                     np.ravel(self.state['Targets']),
+                     np.ravel(self.state['Opportunities']))))
 
 
 def random_solution(problem):
@@ -130,9 +137,6 @@ def astar_heuristic(node):
     for j, target in enumerate(state['Targets']):
         if target[jf.TaskFeatures.SELECTED] == 1:
             continue  # This task has already been selected the maximum number of times.
-        for i in range(len(opportunities)):
-            if [i, j] in node.solution() and node.solution()[-1] != [i, j]:
-                opportunities[i, j, jf.OpportunityFeatures.PSUCCESS] = 0.00000001
         remaining_moves = int(min((1 - target[jf.TaskFeatures.SELECTED]) * 2,
                                   sum(opportunities[:, j, jf.OpportunityFeatures.SELECTABLE] * 2)))
         if not remaining_moves:
@@ -147,7 +151,7 @@ def astar_heuristic(node):
     return remaining_reward  # Return the remaining reward if all moves were possible.
 
 
-def AStar(problem, heuristic=astar_heuristic, track_progress=False):
+def AStar(problem, heuristic=astar_heuristic, track_progress=True):
     """
     This is an A* implementation to search for a solution to a given JFA problem.
     """
@@ -155,14 +159,14 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=False):
     state = env.reset(problem)  # get initial state or load a new problem
     node = Node(sum(state['Targets'][:, jf.TaskFeatures.VALUE]), None, state, 0)
     expansions = 0
-    branchFactor = 0
+    branch_factor = 0
     duplicate_states = 0
-    frontier = []
-    explored = []
-    heapq.heappush(frontier, node)
+    frontier = sc.SortedList()
+    explored = sc.SortedDict()
+    frontier.add(node)
     while frontier:
-        node = heapq.heappop(frontier)
-        if node in explored:
+        node = frontier.pop(0)
+        if node.cat_string() in explored:
             continue
         # print(f"pulled g: {node.g}, action: {node.action}")
         expansions += 1
@@ -173,13 +177,13 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=False):
                 if node.g == node._parent.g - node.reward:
                     return node.g, node.solution()
                 node.g = node._parent.g - node.reward
-                heapq.heappush(frontier, node)
+                frontier.add(node)
                 continue
             node.g = node._parent.g - node.reward
             # This may actually not be the optimal.  There may be a more optimal node.
             # If the value is the same, we found it, if the value changes, put it back in the heap.
-        explored.append(node)
         state = node.state
+        explored[node.cat_string()] = node.g
         for effector, target in np.stack(
                 np.where(state['Opportunities'][:, :, jf.OpportunityFeatures.SELECTABLE] == True), axis=1):
             action = (effector, target)
@@ -189,9 +193,12 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=False):
             child.parent(node)
             h = heuristic(child)  # The possible remaining value assuming that all of the best actions can be taken
             child.g = g - h
-            if child not in explored and child not in frontier:
-                heapq.heappush(frontier, child)
-                branchFactor += 1
+            if child.cat_string() not in explored and child not in frontier:
+                frontier.add(child)
+                if child.action != node.action and node.action:
+                    child.state['Opportunities'][node.action[0], node.action[1], jf.OpportunityFeatures.PSUCCESS] = 0
+                    child.state['Opportunities'][node.action[0], node.action[1], jf.OpportunityFeatures.SELECTABLE] = 0
+                branch_factor += 1
             else:
                 duplicate_states += 1
     return None, "failed"

@@ -21,33 +21,33 @@ SPEED_CORRECTION = pg.STANDARDIZED_TIME * pg.MAX_SPEED
 def printState(state):
     trueFalseStrings = ["False", "True"]
     print("\n\t (x, y)\t\t\tStatic\tSpeed\tAmmo\tEnergy\tTime\tEffDist\tAmmoRte\tEnergyRate")
-    nbEffector = len(state[:, 0, 0])
+    nbEffector = len(state[0, :, 0])
     for i in range(0, nbEffector):
         print("Effector:", end="")
-        print(f"({state[i, 0, jf.EffectorFeatures.XPOS]:.4f}, {state[i, 0, jf.EffectorFeatures.YPOS]:.4f})", end="")
-        print(f"\t{trueFalseStrings[int(state[i, 0, jf.EffectorFeatures.STATIC])]}", end="")
-        print(f"\t{state[i, 0, jf.EffectorFeatures.SPEED]:4.4f}", end="")
-        print(f"\t{state[i, 0, jf.EffectorFeatures.AMMOLEFT]:.4f}", end="")
-        print(f"\t{state[i, 0, jf.EffectorFeatures.ENERGYLEFT]:.4f}", end="")
-        print(f"\t{state[i, 0, jf.EffectorFeatures.TIMELEFT]:.4f}", end="")
-        print(f"\t{state[i, 0, jf.EffectorFeatures.EFFECTIVEDISTANCE]:.4f}", end="")
-        print(f"\t{state[i, 0, jf.EffectorFeatures.AMMORATE]:.4f}", end="")
-        print(f"\t{state[i, 0, jf.EffectorFeatures.ENERGYRATE]:.4f}")
-    nbTask = len(state[0, :, 0])
+        print(f"({state[jf.EffectorFeatures.XPOS, i, 0]:.4f}, {state[jf.EffectorFeatures.YPOS, i, 0]:.4f})", end="")
+        print(f"\t{trueFalseStrings[int(state[jf.EffectorFeatures.STATIC, i, 0])]}", end="")
+        print(f"\t{state[jf.EffectorFeatures.SPEED, i, 0]:4.4f}", end="")
+        print(f"\t{state[jf.EffectorFeatures.AMMOLEFT, i, 0]:.4f}", end="")
+        print(f"\t{state[jf.EffectorFeatures.ENERGYLEFT, i, 0]:.4f}", end="")
+        print(f"\t{state[jf.EffectorFeatures.TIMELEFT, i, 0]:.4f}", end="")
+        print(f"\t{state[jf.EffectorFeatures.EFFECTIVEDISTANCE, i, 0]:.4f}", end="")
+        print(f"\t{state[jf.EffectorFeatures.AMMORATE, i, 0]:.4f}", end="")
+        print(f"\t{state[jf.EffectorFeatures.ENERGYRATE, i, 0]:.4f}")
+    nbTask = len(state[0, 0, :])
     pad = len(jf.EffectorFeatures)
     print("\n\n\t(x, y)\t\t\tValue\tSelected")
-    for i in range(len(state[0, :, 0])):
-        print(f"Target: ({state[0, i, pad + jf.TaskFeatures.XPOS]:.4f}, {state[0, i, pad + jf.TaskFeatures.YPOS]:.4f})",
+    for i in range(nbTask):
+        print(f"Target: ({state[pad + jf.TaskFeatures.XPOS, 0, i]:.4f}, {state[pad + jf.TaskFeatures.YPOS, 0, i]:.4f})",
               end="")
-        print(f"\t{state[0, i, pad + jf.TaskFeatures.VALUE]:.4f}", end="")
-        print(f"\t{state[0, i, pad + jf.TaskFeatures.SELECTED]}")
+        print(f"\t{state[pad + jf.TaskFeatures.VALUE, 0, i]:.4f}", end="")
+        print(f"\t{state[pad + jf.TaskFeatures.SELECTED, 0, i]}")
     pad = len(jf.EffectorFeatures) + len(jf.TaskFeatures)
     print("\n\nAction\t\tPSucc\tEnergy\ttime\tSelectable\tEucDistance\tReturnDist")
     for i in range(nbEffector):
         for j in range(nbTask):
-            if state[i, j, pad + jf.OpportunityFeatures.SELECTABLE]:
+            if state[pad + jf.OpportunityFeatures.SELECTABLE, i, j]:
                 print(
-                    f"({i:2},{j:2}):\t{state[i, j, pad + jf.OpportunityFeatures.PSUCCESS]:.4}\t{state[i, j, pad + jf.OpportunityFeatures.ENERGYCOST]:.4f}\t{state[i, j, pad + jf.OpportunityFeatures.TIMECOST]:.4f}\t{trueFalseStrings[int(state[i, j, pad + jf.OpportunityFeatures.SELECTABLE])]}\t\t{euclideanDistance(state[i, 0, :], state[0, j, len(jf.EffectorFeatures):]):.6f}\t{returnDistance(state[i, 0, :], state[0, j, len(jf.EffectorFeatures):]):.6f}")
+                    f"({i:2},{j:2}):\t{state[pad + jf.OpportunityFeatures.PSUCCESS, i, j]:.4}\t{state[pad + jf.OpportunityFeatures.ENERGYCOST, i, j]:.4f}\t{state[pad + jf.OpportunityFeatures.TIMECOST, i, j]:.4f}\t{trueFalseStrings[int(state[pad + jf.OpportunityFeatures.SELECTABLE, i, j])]}\t\t{euclideanDistance(state[:, i, 0], state[len(jf.EffectorFeatures):, 0, j]):.6f}\t{returnDistance(state[:, i, 0], state[len(jf.EffectorFeatures):, i, j]):.6f}")
 
 
 def print_grid(state):
@@ -86,7 +86,8 @@ def print_grid(state):
 
 
 class JeremyAgent:
-    def getAction(self, state):
+    @staticmethod
+    def getAction(state):
         """
         Allows the user to control which action to take next by selecting an agent, and a task.
         """
@@ -347,6 +348,9 @@ class Simulation:
         opportunityData[:, taskIndex, jf.OpportunityFeatures.SELECTABLE] *= (task[jf.TaskFeatures.SELECTED] < 1)
         opportunityData[:, taskIndex, jf.OpportunityFeatures.PSUCCESS] *= \
             opportunityData[:, taskIndex, jf.OpportunityFeatures.SELECTABLE]
+        if effector[jf.EffectorFeatures.STATIC]:  # Ordering for static effectors doesn't matter.  This reduces search space.
+            opportunityData[effectorIndex, :taskIndex, jf.OpportunityFeatures.SELECTABLE] *= 0
+            opportunityData[effectorIndex, :taskIndex, jf.OpportunityFeatures.PSUCCESS] *= 0
 
         for i in range(0, nbTask):
             if not opportunityData[effectorIndex][i][jf.OpportunityFeatures.SELECTABLE]:
