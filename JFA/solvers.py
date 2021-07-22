@@ -62,6 +62,11 @@ class Node:
         else:
             return self.g > other
 
+    @property
+    def parent(self):
+        return self._parent
+
+    @parent.setter
     def parent(self, parent=None):
         self._parent = parent
         self._solution = self._parent.solution().copy()
@@ -70,10 +75,18 @@ class Node:
     def solution(self):
         return self._solution
 
+    @property
+    def candidate_nodes(self):
+        return np.stack(np.where(self.state['Opportunities'][:, :, jf.OpportunityFeatures.SELECTABLE] == True), axis=1)
+
     def cat_string(self):
-        return zlib.compress(np.concatenate((np.ravel(self.state['Effectors']),
-                     np.ravel(self.state['Targets']),
-                     np.ravel(self.state['Opportunities']))))
+        return zlib.compress(
+            np.concatenate(
+                (np.ravel(self.state['Effectors']),
+                 np.ravel(self.state['Targets']),
+                 np.ravel(self.state['Opportunities']))
+            ).tobytes()
+        )
 
 
 def random_solution(problem):
@@ -98,7 +111,7 @@ def greedy(problem):
     node = Node(sum(state['Targets'][:, jf.TaskFeatures.VALUE]), None, state, 0)
     node = greedy_rec(node, env=env)
 
-    return sum(state['Targets'][:, jf.TaskFeatures.VALUE]) - node.g, node.Solution()
+    return node.g, node.solution()
 
 
 def greedy_rec(node, env=None):
@@ -115,11 +128,11 @@ def greedy_rec(node, env=None):
     state, reward, terminal = env.update_state(action, copy.deepcopy(state))
     if terminal:
         child = Node(node.g - reward, action, state, reward, terminal)
-        child.parent(node)
+        child.parent = node
         return child
 
     once = Node(node.g - reward, action, state, reward, terminal)
-    once.parent(node)
+    once.parent = node
     once = greedy_rec(once, env)
 
     return once
@@ -151,7 +164,7 @@ def astar_heuristic(node):
     return remaining_reward  # Return the remaining reward if all moves were possible.
 
 
-def AStar(problem, heuristic=astar_heuristic, track_progress=True):
+def AStar(problem, heuristic=astar_heuristic, track_progress=False):
     """
     This is an A* implementation to search for a solution to a given JFA problem.
     """
@@ -172,25 +185,24 @@ def AStar(problem, heuristic=astar_heuristic, track_progress=True):
         expansions += 1
         if track_progress:
             print(f"\rExpansions: {expansions}, Duplicates: {duplicate_states}", end="")
-        if node._parent is not None:
+        if node.parent is not None:
             if node.terminal is True:
-                if node.g == node._parent.g - node.reward:
+                if node.g == node.parent.g - node.reward:
                     return node.g, node.solution()
-                node.g = node._parent.g - node.reward
+                node.g = node.parent.g - node.reward
                 frontier.add(node)
                 continue
-            node.g = node._parent.g - node.reward
+            node.g = node.parent.g - node.reward
             # This may actually not be the optimal.  There may be a more optimal node.
             # If the value is the same, we found it, if the value changes, put it back in the heap.
         state = node.state
         explored[node.cat_string()] = node.g
-        for effector, target in np.stack(
-                np.where(state['Opportunities'][:, :, jf.OpportunityFeatures.SELECTABLE] == True), axis=1):
+        for effector, target in np.stack(np.where(state['Opportunities'][:, :, jf.OpportunityFeatures.SELECTABLE] == True), axis=1):
             action = (effector, target)
-            new_state, reward, terminal = env.update_state(action, copy.deepcopy(state))
+            new_state, reward, terminal = env.update_state(action, copy.deepcopy(state), smart_search=True)
             g = node.g - reward  # The remaining value after the action taken
             child = Node(g, action, new_state, reward, terminal)
-            child.parent(node)
+            child.parent = node
             h = heuristic(child)  # The possible remaining value assuming that all of the best actions can be taken
             child.g = g - h
             if child.cat_string() not in explored and child not in frontier:
@@ -218,7 +230,7 @@ if __name__ == '__main__':
     sim.printState(sim.mergeState(simProblem['Effectors'], simProblem['Targets'], simProblem['Opportunities']))
     rewards_available = sum(simProblem['Targets'][:, jf.TaskFeatures.VALUE])
 
-    solvers = [{'name': "AStar", 'function': AStar, 'solve': True},
+    solvers = [{'name': "AStar", 'function': AStar, 'solve': False},
                {'name': "Greedy", 'function': greedy, 'solve': True},
                {'name': "Random Choice", 'function': random_solution, 'solve': False}]
 

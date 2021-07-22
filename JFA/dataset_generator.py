@@ -7,12 +7,14 @@ if __package__ is not None and len(__package__) > 0:
     from . import problem_generators as pg
     from . import solvers as js
     from . import genetic_algorithm as jg
+    from . import branch_bound as bb
 else:
     import simulator as sim
     import features as jf
     import problem_generators as pg
     import solvers as js
     import genetic_algorithm as jg
+    import branch_bound as bb
 import numpy as np
 import time
 import csv
@@ -151,26 +153,29 @@ def log(string):
 
 if __name__ == '__main__':
     solvers = [{'name': "Random Choice", 'function': js.random_solution, 'solve': False},
+               {'name': "Greedy", 'function': js.greedy, 'solve': False},
                {'name': "GA",
                 'function': partial(jg.jfa_ga_solver, population_size=240, generations_qty=15000),
                 'solve': False},
-               {'name': "Greedy", 'function': js.greedy, 'solve': False},
-               {'name': "AStar", 'function': js.AStar, 'solve': True}]
+               {'name': "Branch and Bound", 'function': bb.jfa_branch_bound_solver, 'solve': True},
+               {'name': "A*", 'function': js.AStar, 'solve': True}]
     # AStar should be the last solver so that its solution get printed
     parser = argparse.ArgumentParser()
     parser.add_argument('--effectors', type=int, help="The number of effectors in each problem", default=3,
                         required=False)
     parser.add_argument('--targets', type=int, help="The number of targets in each problem", default=9, required=False)
     parser.add_argument('--quantity', type=int, help="The number of problems of each size", default=1, required=False)
-    parser.add_argument('--offset', type=int, help="Numbering offset for scenarios", default=1, required=False)
+    parser.add_argument('--offset', type=int, help="Numbering offset for scenarios", default=0, required=False)
     parser.add_argument('--solve', type=bool, help="Whether or not we will solve the problems", default=True,
                         required=False)
+    parser.add_argument('--save', type=bool, help="Save the output to a file", default=False, required=False)
     args = parser.parse_args()
     effectors = args.effectors
     targets = args.targets
     num_problems = args.quantity
     numbering_offset = args.offset
     solve_problems = args.solve
+    save = args.save
     # directory = f"{effectors}x{targets}"
     directory = os.path.join(f"JFA Validation Datasets for DRDC Slides", f"JFA {effectors}x{targets} Validation Set")
     try:
@@ -210,6 +215,7 @@ if __name__ == '__main__':
                 for solver in solvers:
                     if solver['solve']:
                         g, solution = solver['function'](simProblem)
+                        log(f"solution for {solver['name']}: {solution}: {g}")
                         csv_row.append(g)
                         current_time = time.time()
                         csv_row.append(current_time - recent_time)
@@ -222,7 +228,7 @@ if __name__ == '__main__':
             input("Press Enter to attempt again, or ctrl+c to quit.")
     print()
 
-    if solve_problems:
+    if solve_problems and save:
         csv_filename = os.path.join(directory, f'{time.time()}.csv')
         with open(csv_filename, 'w') as f:
             writer = csv.writer(f)

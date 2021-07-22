@@ -134,23 +134,18 @@ dmypy.json
 ?x?/*
 ?x??/*
 ??x??/*
-/WTA/?x?/*
-/WTA/?x??/*
-/WTA/??x??/*
-WTA/(10, 10).csv
-WTA/(4, 4).csv
-WTA/(3, 3).csv
-WTA/(5, 5).csv
-WTA/(7, 7).csv
-WTA/GS_10x10.xlsx
-WTA/GS_3x3.xlsx
-WTA/GS_4x4.xlsx
-WTA/GS_5x5.xlsx
-WTA/GS_7x7.xlsx
-/JFA Validation Datasets for DRDC Slides/*
 /pypy3/*
-/WTA/validation_20x20/*
-/WTA/validation_15x15/
-/WTA/validation_10x10/
-/WTA/validation_4x4/
+/old_datasets/JFA/4x10_Analysis.xlsx
+/old_datasets/JFA/10x50.json
+/old_datasets/JFA/GS-claAGAs4TG6vpaKWslQELg.json
+/old_datasets/JFA/GS-GVeCUHSIRJGfhz0lHlwcvw.json
+/old_datasets/JFA/GS-validation_00015_10x50.json
+/old_datasets/JFA/test.json
+/old_datasets/JFA/toy.json
+/old_datasets/JFA/validation_00015_10x50.json
+/WTA/old_datasets/
 /old_datasets/
+/JFA Validation Datasets for DRDC Slides/
+plots/
+/plots/
+/plots/*

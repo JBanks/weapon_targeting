@@ -58,12 +58,12 @@ def safe_filename(size_str, json_prefix):
 
 def generate_dataset(weapons=5, targets=5, quantity=100, solve_problems=True, csv_filename=time.time(),
                      problem_set="train", offset=0, directory=None, save=True):
-    solvers = [{'name': "Greedy", 'function': greedy.wta_greedy_solver, 'solve': True},
+    solvers = [{'name': "Greedy", 'function': greedy.wta_greedy_solver, 'solve': False},
                {'name': "Genetic Algorithm",
                 'function': partial(genetic_algorithm.wta_ga_solver, population_size=256, generations_qty=15000),
                 'solve': False},
                {'name': "Branch and Bound", 'function': branch_bound.wta_branch_bound_solver, 'solve': True},
-               {'name': "A*", 'function': a_star.wta_astar_solver, 'solve': False},
+               {'name': "A*", 'function': a_star.wta_astar_solver, 'solve': True},
                {'name': "OR-Tools", 'function': operations_research.wta_or_solver, 'solve': False}]
 
     size_str = f"{weapons}x{targets}"

@@ -52,8 +52,8 @@ def printState(state):
 
 def print_grid(state):
     trueFalseStrings = ["False", "True"]
-    nbEffector = len(state[:, 0, 0])
-    nbTask = len(state[0, :, 0])
+    nbEffector = len(state[0, :, 0])
+    nbTask = len(state[0, 0, :])
     pad = len(jf.EffectorFeatures) + len(jf.TaskFeatures)
     print("\t", end="")
     for i in range(nbEffector):
@@ -62,24 +62,27 @@ def print_grid(state):
     for j in range(nbTask):
         print(f"{j}\t", end="")
         for i in range(nbEffector):
-            if state[i, j, pad + jf.OpportunityFeatures.SELECTABLE]:
-                print(f"{state[i, j, pad + jf.OpportunityFeatures.PSUCCESS]:.8f}\t", end="")
+            if state[pad + jf.OpportunityFeatures.SELECTABLE, i, j]:
+                print(f"{state[pad + jf.OpportunityFeatures.PSUCCESS, i, j]:.8f}\t", end="")
             else:
                 print("-" * 8, end="")
         print()
-        print(f"{state[0, j, len(jf.EffectorFeatures) + jf.TaskFeatures.VALUE]:.3f}", end="")
+        print(f"{state[len(jf.EffectorFeatures) + jf.TaskFeatures.VALUE, 0, j]:.3f}", end="")
         print("\t", end="")
         for i in range(nbEffector):
-            if state[i, j, pad + jf.OpportunityFeatures.SELECTABLE]:
-                print(f"{state[i, j, pad + jf.OpportunityFeatures.ENERGYCOST]:.8f}\t", end="")
+            if state[pad + jf.OpportunityFeatures.SELECTABLE, i, j]:
+                print(f"{state[pad + jf.OpportunityFeatures.PSUCCESS, i, j] * state[len(jf.EffectorFeatures) + jf.TaskFeatures.VALUE, 0, j]:.8f}\t", end="")
+                pass
+                # print(f"{state[pad + jf.OpportunityFeatures.ENERGYCOST, i, j]:.8f}\t", end="")
             else:
                 print("-" * 8, end="")
         print()
-        print(f"{state[0, j, len(jf.EffectorFeatures) + jf.TaskFeatures.SELECTED]:.1f}", end="")
+        print(f"{state[len(jf.EffectorFeatures) + jf.TaskFeatures.SELECTED, 0, j]:.1f}", end="")
         print("\t", end="")
         for i in range(nbEffector):
-            if state[i, j, pad + jf.OpportunityFeatures.SELECTABLE]:
-                print(f"{state[i, j, pad + jf.OpportunityFeatures.TIMECOST]:.8f}\t", end="")
+            if state[pad + jf.OpportunityFeatures.SELECTABLE, i, j]:
+                pass
+                # print(f"{state[pad + jf.OpportunityFeatures.TIMECOST, i, j]:.8f}\t", end="")
             else:
                 print("-" * 8, end="")
         print("\n")
@@ -92,7 +95,7 @@ class JeremyAgent:
         Allows the user to control which action to take next by selecting an agent, and a task.
         """
         effector, task = None, None
-        printState(state)
+        print_grid(state)
         while effector is None:
             try:
                 effector = int(input("effector: "))
@@ -298,7 +301,7 @@ class Simulation:
 
         return self.formatState(self.effectorData, self.taskData, self.opportunityData), reward, terminal
 
-    def update_state(self, action, state=None):
+    def update_state(self, action, state=None, smart_search=False):
         """
         Take an action from an agent and apply that action to the effector specified.
         """
@@ -348,7 +351,7 @@ class Simulation:
         opportunityData[:, taskIndex, jf.OpportunityFeatures.SELECTABLE] *= (task[jf.TaskFeatures.SELECTED] < 1)
         opportunityData[:, taskIndex, jf.OpportunityFeatures.PSUCCESS] *= \
             opportunityData[:, taskIndex, jf.OpportunityFeatures.SELECTABLE]
-        if effector[jf.EffectorFeatures.STATIC]:  # Ordering for static effectors doesn't matter.  This reduces search space.
+        if smart_search and effector[jf.EffectorFeatures.STATIC]:  # Ordering for static effectors doesn't matter.  This reduces search space.
             opportunityData[effectorIndex, :taskIndex, jf.OpportunityFeatures.SELECTABLE] *= 0
             opportunityData[effectorIndex, :taskIndex, jf.OpportunityFeatures.PSUCCESS] *= 0
 
@@ -471,7 +474,7 @@ def main():
             agent.learn(state, action, reward, new_state, terminal)
             state = new_state
             print(f"reward returned: {reward}")
-        printState(state)
+        print_grid(state)
         print(f"schedule: {env.getSchedule()}")
         print(f"Reward Returned: {total_reward}")
         state = env.reset()
