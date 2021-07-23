@@ -29,7 +29,10 @@ class BBSolver:
             self.visited_children = []
             self._solution = []
             self._parent = None
-            self.terminal = terminal
+            if (self.state['Opportunities'][:, :, jf.OpportunityFeatures.SELECTABLE] != 0).any():
+                self.terminal = False
+            else:
+                self.terminal = True
             if parent is not None:
                 self.parent = parent
                 self.low_bound = self.solver.jfa_lower_bound(partial_solution=self._solution)
@@ -67,7 +70,12 @@ class BBSolver:
             """
             nodes = np.stack(np.where(self.state['Opportunities'][:, :, jf.OpportunityFeatures.SELECTABLE] == True),
                              axis=1)
-            return [self.solver.new_node((i, j), self) for i, j in nodes if (i, j) not in self.visited_children]
+            if self._parent is not None:
+                nodes = [self.solver.new_node((i, j), self) for i, j in nodes if (i, j) not in self.visited_children and
+                         ((i, j) not in self._solution or (i, j) == self.action)]
+            else:
+                nodes = [self.solver.new_node((i, j), self) for i, j in nodes if (i, j) not in self.visited_children]
+            return nodes
 
     def __init__(self, problem, node_type=JFANode):
         """
@@ -96,10 +104,10 @@ class BBSolver:
         @param solution: A list of weapon-target pairings
         @return: The remaining value after application of the solution
         """
-        state = self.problem
+        state = copy.deepcopy(self.problem)
         for assignment in solution:
             state, reward, terminal = self.env.update_state(assignment, state)
-        return sum(state['targets'][:, jf.TaskFeatures.VALUE])
+        return sum(state['Targets'][:, jf.TaskFeatures.VALUE])
 
     def greedy_heuristic(self, problem=None, partial_solution=None, with_value=False):
         """
@@ -165,7 +173,7 @@ class BBSolver:
             value = target[jf.TaskFeatures.VALUE]
             top = np.argpartition(opportunities[:, j, jf.OpportunityFeatures.PSUCCESS], -1)[
                   -1:]  # select the top 'n' effectors.
-            for move in range(remaining_moves):
+            for move in range(remaining_moves):  # Use exponent to make this calculate slightly faster?
                 reward = value * opportunities[top[0], j, jf.OpportunityFeatures.PSUCCESS]
                 remaining_reward += reward
                 value -= reward
