@@ -55,19 +55,29 @@ def print_grid(state):
     nbEffector = len(state[0, :, 0])
     nbTask = len(state[0, 0, :])
     pad = len(jf.EffectorFeatures) + len(jf.TaskFeatures)
-    print("\t", end="")
+    print("\t\t", end="")
     for i in range(nbEffector):
         print(f"{i}\t\t", end="")
     print()
+    print("Ammo\t\t", end="")
+    for i in range(nbEffector):
+        print(f"{state[jf.EffectorFeatures.AMMOLEFT, i, 0]:.8f}\t", end="")
+    print()
+    print("Range\t\t", end="")
+    for i in range(nbEffector):
+        print(f"{state[jf.EffectorFeatures.ENERGYLEFT, i, 0]:.8f}\t", end="")
+    print("\n\nTasks")
     for j in range(nbTask):
-        print(f"{j}\t", end="")
+        print(f"{j}\t\t", end="")
         for i in range(nbEffector):
             if state[pad + jf.OpportunityFeatures.SELECTABLE, i, j]:
                 print(f"{state[pad + jf.OpportunityFeatures.PSUCCESS, i, j]:.8f}\t", end="")
             else:
-                print("-" * 8, end="")
+                print("\033[31m", end="")
+                print(f"{state[pad + jf.OpportunityFeatures.PSUCCESS, i, j]:.8f}\t", end="")
+                print("\033[0m", end="")
         print()
-        print(f"{state[len(jf.EffectorFeatures) + jf.TaskFeatures.VALUE, 0, j]:.3f}", end="")
+        print(f"Value: {state[len(jf.EffectorFeatures) + jf.TaskFeatures.VALUE, 0, j]:.3f}", end="")
         print("\t", end="")
         for i in range(nbEffector):
             if state[pad + jf.OpportunityFeatures.SELECTABLE, i, j]:
@@ -75,16 +85,19 @@ def print_grid(state):
                 pass
                 # print(f"{state[pad + jf.OpportunityFeatures.ENERGYCOST, i, j]:.8f}\t", end="")
             else:
-                print("-" * 8, end="")
+                print("\033[31m", end="")
+                print(f"{state[pad + jf.OpportunityFeatures.PSUCCESS, i, j] * state[len(jf.EffectorFeatures) + jf.TaskFeatures.VALUE, 0, j]:.8f}\t", end="")
+                print("\033[0m", end="")
         print()
-        print(f"{state[len(jf.EffectorFeatures) + jf.TaskFeatures.SELECTED, 0, j]:.1f}", end="")
+        print(f"Selected: {state[len(jf.EffectorFeatures) + jf.TaskFeatures.SELECTED, 0, j]:.1f}", end="")
         print("\t", end="")
         for i in range(nbEffector):
             if state[pad + jf.OpportunityFeatures.SELECTABLE, i, j]:
-                pass
-                # print(f"{state[pad + jf.OpportunityFeatures.TIMECOST, i, j]:.8f}\t", end="")
+                print(f"{state[pad + jf.OpportunityFeatures.ENERGYCOST, i, j]:.8f}\t", end="")
             else:
-                print("-" * 8, end="")
+                print("\033[31m", end="")
+                print(f"{state[pad + jf.OpportunityFeatures.ENERGYCOST, i, j]:.8f}\t", end="")
+                print("\033[0m", end="")
         print("\n")
 
 
